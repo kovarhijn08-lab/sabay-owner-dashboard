@@ -110,17 +110,28 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 export const authApi = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await request<LoginResponse>('/auth/login', {
+      // Прямой запрос без токена для логина
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(credentials),
       });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json() as LoginResponse;
       
-      if (response && response.accessToken && response.user) {
+      if (data && data.accessToken && data.user) {
         if (typeof window !== 'undefined') {
-          localStorage.setItem('token', response.accessToken);
-          localStorage.setItem('user', JSON.stringify(response.user));
+          localStorage.setItem('token', data.accessToken);
+          localStorage.setItem('user', JSON.stringify(data.user));
         }
-        return response;
+        return data;
       } else {
         throw new Error('Неверный формат ответа от сервера');
       }
@@ -420,6 +431,7 @@ export type {
 interface CreatePropertyDto {
   name: string;
   region: string;
+  unitNumber: string;
   purchasePrice: number;
   purchaseDate?: string;
   unitId?: string | null;

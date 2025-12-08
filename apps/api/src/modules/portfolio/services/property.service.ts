@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OwnerProperty } from '../../database/entities/owner-property.entity';
 import { Project } from '../../database/entities/project.entity';
+import { Unit } from '../../database/entities/unit.entity';
 import { CreatePropertyDto } from '../dto/create-property.dto';
 import { UpdatePropertyDto } from '../dto/update-property.dto';
 
@@ -13,6 +14,8 @@ export class PropertyService {
     private propertyRepository: Repository<OwnerProperty>,
     @InjectRepository(Project)
     private projectRepository: Repository<Project>,
+    @InjectRepository(Unit)
+    private unitRepository: Repository<Unit>,
   ) {}
 
   async findById(id: string, userId: string) {
@@ -35,9 +38,15 @@ export class PropertyService {
    * 1. Если в запросе указан managerId - используем его
    * 2. Иначе, если у связанного Project есть defaultManagerId - используем его
    * 3. Иначе managerId = null
+   * 
+   * Также создает или находит Unit по unitNumber:
+   * - Если указан projectId, ищет Unit с таким unitNumber в проекте
+   * - Если не найден, создает новый Unit
+   * - Если projectId не указан, создает Unit без проекта
    */
   async create(ownerId: string, createDto: CreatePropertyDto) {
     let managerId: string | null = null;
+    let unitId: string | null = null;
 
     // Логика назначения менеджера
     if (createDto.managerId) {
@@ -54,8 +63,51 @@ export class PropertyService {
     }
     // 3. Если ни того, ни другого нет - managerId остается null
 
+    // Логика создания/поиска Unit по unitNumber
+    if (createDto.unitNumber) {
+      // Если указан projectId, ищем Unit в проекте
+      if (createDto.projectId) {
+        // Используем raw query для поиска Unit, чтобы избежать проблем с отсутствующими полями
+        const unitResult = await this.unitRepository
+          .createQueryBuilder('unit')
+          .where('unit.projectId = :projectId', { projectId: createDto.projectId })
+          .andWhere('unit.unitNumber = :unitNumber', { unitNumber: createDto.unitNumber })
+          .andWhere('(unit.deletedAt IS NULL OR unit.deletedAt = "")')
+          .select(['unit.id', 'unit.projectId', 'unit.unitNumber'])
+          .getOne();
+        
+        let unit = unitResult;
+
+        // Если не найден, создаем новый Unit
+        if (!unit) {
+          unit = this.unitRepository.create({
+            projectId: createDto.projectId,
+            unitNumber: createDto.unitNumber,
+          });
+          unit = await this.unitRepository.save(unit);
+        }
+
+        unitId = unit.id;
+      } else {
+        // Если projectId не указан, создаем Unit без проекта
+        const unit = this.unitRepository.create({
+          projectId: null,
+          unitNumber: createDto.unitNumber,
+        });
+        const savedUnit = await this.unitRepository.save(unit);
+        unitId = savedUnit.id;
+      }
+    } else if (createDto.unitId) {
+      // Если указан unitId напрямую, используем его
+      unitId = createDto.unitId;
+    }
+
+    // Удаляем unitNumber из DTO перед созданием property (это поле не в OwnerProperty)
+    const { unitNumber, ...propertyData } = createDto;
+
     const property = this.propertyRepository.create({
-      ...createDto,
+      ...propertyData,
+      unitId,
       ownerId,
       managerId,
       status: 'under_construction',

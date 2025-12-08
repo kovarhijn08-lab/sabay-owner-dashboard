@@ -7,12 +7,13 @@ import { GoalsService } from './services/goals.service';
 import { NotificationService } from './services/notification.service';
 import { OwnerProperty } from '../database/entities/owner-property.entity';
 import { Project } from '../database/entities/project.entity';
+import { Unit } from '../database/entities/unit.entity';
 import { PortfolioGoal } from '../database/entities/portfolio-goal.entity';
 import { Notification } from '../database/entities/notification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OwnerProperty, Project, PortfolioGoal, Notification]),
+    TypeOrmModule.forFeature([OwnerProperty, Project, Unit, PortfolioGoal, Notification]),
   ],
   controllers: [PortfolioController],
   providers: [PropertyService, PortfolioService, GoalsService, NotificationService],
