@@ -21,14 +21,14 @@ export class ManagementCompany {
   name!: string;
 
   // Контактная информация
-  @Column({ type: 'varchar', length: 200, nullable: true })
+  @Column({ type: 'varchar', length: 200, nullable: true, name: 'contactEmail' })
   email!: string | null;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true, name: 'contactPhone' })
   phone!: string | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  address!: string | null;
+  website!: string | null;
 
   // Описание/дополнительная информация
   @Column({ type: 'text', nullable: true })

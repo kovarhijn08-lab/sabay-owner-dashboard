@@ -17,6 +17,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { PropertyService } from './services/property.service';
 import { GoalsService } from './services/goals.service';
 import { NotificationService } from './services/notification.service';
+import { PortfolioService } from './services/portfolio.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { CreateGoalDto } from './dto/create-goal.dto';
@@ -30,7 +31,13 @@ export class PortfolioController {
     private readonly propertyService: PropertyService,
     private readonly goalsService: GoalsService,
     private readonly notificationService: NotificationService,
+    private readonly portfolioService: PortfolioService,
   ) {}
+
+  @Get('summary')
+  async getSummary(@CurrentUser() user: any) {
+    return this.portfolioService.getSummary(user.id);
+  }
 
   // ========== Управление объектами ==========
 
@@ -60,6 +67,23 @@ export class PortfolioController {
     @CurrentUser() user: any,
   ) {
     return this.propertyService.update(id, user.id, updateDto);
+  }
+
+  @Get('properties/:id/history')
+  async getPropertyHistory(
+    @Param('id') id: string,
+    @Query('limit') limit: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.propertyService.getPropertyHistory(id, user.id, limit ? parseInt(limit, 10) : 50);
+  }
+
+  @Get('properties/:id/analytics')
+  async getPropertyAnalytics(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.propertyService.getPropertyAnalytics(id, user.id);
   }
 
   // ========== Управление целями ==========
@@ -101,14 +125,12 @@ export class PortfolioController {
 
   @Get('forecasts')
   async getForecasts(@CurrentUser() user: any) {
-    // TODO: Реализовать расчет прогнозов
-    // Пока возвращаем заглушку
-    return {
-      forecastYearlyIncome: 0,
-      forecastConstructionIncome: 0,
-      totalForecastIncome: 0,
-      forecastValueGrowth: 0,
-    };
+    return this.portfolioService.getForecasts(user.id);
+  }
+
+  @Get('chart-data')
+  async getChartData(@CurrentUser() user: any) {
+    return this.portfolioService.getPortfolioChartData(user.id);
   }
 
   // ========== Уведомления ==========

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { portfolioApi, authApi, OwnerProperty, UpdatePropertyDto } from '../../../../../lib/api-client';
 import { useToastContext } from '../../../../../components/ToastProvider';
 import { StickyActions } from '../../../../../components/StickyActions';
+import { Breadcrumbs } from '../../../../../components/common/Breadcrumbs';
 
 /**
  * Страница редактирования объекта недвижимости
@@ -79,31 +80,81 @@ export default function EditPropertyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-white/60">Загрузка...</div>
+      <div className="min-h-screen bg-slate-950 text-white p-6">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="h-6 bg-white/10 rounded animate-pulse w-48"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white/5 rounded-lg p-6 border border-white/10">
+                <div className="h-4 bg-white/10 rounded animate-pulse mb-4 w-32"></div>
+                <div className="h-12 bg-white/10 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-red-400">Объект не найден</div>
+      <div className="min-h-screen bg-slate-950 text-white p-6">
+        <div className="max-w-2xl mx-auto">
+          <Breadcrumbs items={[
+            { label: 'Портфель', href: '/portfolio' },
+            { label: 'Объекты', href: '/portfolio/properties' },
+            { label: 'Редактирование' },
+          ]} />
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center mt-6">
+            <svg className="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-red-400 mb-2">Объект не найден</h3>
+            <p className="text-white/60 mb-4">Объект с указанным ID не существует или был удален.</p>
+            <button
+              onClick={() => router.push('/portfolio/properties')}
+              className="px-4 py-2 bg-sabay-primary/10 border border-sabay-primary text-sabay-primary rounded-lg hover:bg-sabay-primary/20 transition"
+            >
+              Вернуться к списку объектов
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Форматирование цены
+  const formatPrice = (value: string | number | undefined) => {
+    if (!value) return '';
+    const num = typeof value === 'string' ? value.replace(/\s/g, '') : value.toString();
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+
+  const parsePrice = (value: string) => {
+    return value.replace(/\s/g, '');
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'currentEstimate' | 'expectedAdr') => {
+    const rawValue = e.target.value;
+    const cleanedValue = rawValue.replace(/[^\d\s]/g, '');
+    setFormData({
+      ...formData,
+      [field]: cleanedValue ? parseFloat(parsePrice(cleanedValue)) : undefined,
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <main className="mx-auto max-w-2xl px-4 py-8 pb-32 md:pb-8">
-        <header className="mb-6">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-white/60 mb-4 hover:text-white transition px-3 py-2 rounded-lg hover:bg-white/5 min-h-[44px] flex items-center"
-          >
-            ← Назад
-          </button>
-          <h1 className="text-3xl font-semibold mb-2">Редактировать объект</h1>
+    <div className="min-h-screen bg-slate-950 text-white p-6">
+      <div className="max-w-2xl mx-auto space-y-6 pb-32 md:pb-6">
+        <Breadcrumbs items={[
+          { label: 'Портфель', href: '/portfolio' },
+          { label: 'Объекты', href: '/portfolio/properties' },
+          { label: property.name, href: `/portfolio/properties/${id}` },
+          { label: 'Редактирование' },
+        ]} />
+        
+        <header>
+          <h1 className="text-3xl font-bold mb-2">Редактировать объект</h1>
           <p className="text-white/60">{property.name}</p>
         </header>
 
@@ -145,21 +196,32 @@ export default function EditPropertyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Текущая оценочная стоимость (USD)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.currentEstimate || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    currentEstimate: e.target.value ? parseFloat(e.target.value) : undefined,
-                  })
-                }
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary min-h-[44px]"
-                placeholder="0.00"
-              />
+              <label className="block text-sm font-medium mb-2">Текущая оценочная стоимость (₽)</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatPrice(formData.currentEstimate?.toString())}
+                  onChange={(e) => handlePriceChange(e, 'currentEstimate')}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 pr-12 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary min-h-[44px] text-lg font-mono"
+                  placeholder="0"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60">₽</span>
+              </div>
+              <p className="text-xs text-white/50 mt-1">Разделители тысяч добавятся автоматически</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Статус</label>
+              <select
+                value={formData.status || property.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sabay-primary min-h-[44px]"
+              >
+                <option value="under_construction">В строительстве</option>
+                <option value="rental">В аренде</option>
+                <option value="closed">Закрыто</option>
+              </select>
             </div>
           </div>
 
@@ -215,18 +277,19 @@ export default function EditPropertyPage() {
               <h2 className="text-lg font-semibold mb-4">Данные для аренды</h2>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Ожидаемый ADR (USD)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.expectedAdr || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, expectedAdr: e.target.value ? parseFloat(e.target.value) : undefined })
-                  }
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary min-h-[44px]"
-                  placeholder="0.00"
-                />
+                <label className="block text-sm font-medium mb-2">Ожидаемый ADR (₽/ночь)</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatPrice(formData.expectedAdr?.toString())}
+                    onChange={(e) => handlePriceChange(e, 'expectedAdr')}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 pr-12 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary min-h-[44px] font-mono"
+                    placeholder="0"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60">₽</span>
+                </div>
+                <p className="text-xs text-white/50 mt-1">Средняя дневная ставка аренды</p>
               </div>
 
               <div>
@@ -277,9 +340,10 @@ export default function EditPropertyPage() {
             </button>
           </div>
         </form>
+      </div>
 
-        {/* Липкие кнопки для мобильных */}
-        <StickyActions>
+      {/* Липкие кнопки для мобильных */}
+      <StickyActions>
           <button
             type="button"
             onClick={() => router.back()}
@@ -312,7 +376,6 @@ export default function EditPropertyPage() {
             )}
           </button>
         </StickyActions>
-      </main>
     </div>
   );
 }

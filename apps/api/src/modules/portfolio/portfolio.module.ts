@@ -10,10 +10,11 @@ import { Project } from '../database/entities/project.entity';
 import { Unit } from '../database/entities/unit.entity';
 import { PortfolioGoal } from '../database/entities/portfolio-goal.entity';
 import { Notification } from '../database/entities/notification.entity';
+import { PropertyEvent } from '../database/entities/property-event.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OwnerProperty, Project, Unit, PortfolioGoal, Notification]),
+    TypeOrmModule.forFeature([OwnerProperty, Project, Unit, PortfolioGoal, Notification, PropertyEvent]),
   ],
   controllers: [PortfolioController],
   providers: [PropertyService, PortfolioService, GoalsService, NotificationService],

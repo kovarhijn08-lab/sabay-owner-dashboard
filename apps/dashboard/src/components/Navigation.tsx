@@ -19,6 +19,7 @@ export function Navigation() {
       { href: '/portfolio/catalog', label: 'Каталог' },
       { href: '/portfolio/goals', label: 'Цели' },
       { href: '/portfolio/notifications', label: 'Уведомления' },
+      { href: '/portfolio/compare', label: 'Сравнение' },
     ] : []),
   ];
 

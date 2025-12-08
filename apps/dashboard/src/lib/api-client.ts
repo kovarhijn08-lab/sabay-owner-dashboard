@@ -340,7 +340,30 @@ export interface UpdatePropertyDto {
   expectedOccupancy?: number;
 }
 
+export interface PortfolioSummary {
+  totalProperties: number;
+  totalPurchaseValue: number;
+  totalCurrentValue: number;
+  valueGrowth: number;
+  valueGrowthPercent: number;
+  rentalCount: number;
+  constructionCount: number;
+  averageROI: number;
+}
+
 export const portfolioApi = {
+  async getSummary() {
+    return request<PortfolioSummary>('/portfolio/summary');
+  },
+
+  async getChartData() {
+    return request<{
+      valueHistory: Array<{ date: string; purchaseValue: number; currentValue: number }>;
+      statusDistribution: { rental: number; under_construction: number; closed: number };
+      topRegions: Array<{ region: string; count: number }>;
+    }>('/portfolio/chart-data');
+  },
+
   async getProperties() {
     return request<OwnerProperty[]>('/portfolio/properties');
   },
@@ -351,6 +374,22 @@ export const portfolioApi = {
 
   async getProperty(id: string) {
     return request<OwnerProperty>(`/portfolio/properties/${id}`);
+  },
+
+  async getPropertyHistory(id: string, limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return request<any[]>(`/portfolio/properties/${id}/history${query}`);
+  },
+
+  async getPropertyAnalytics(id: string) {
+    return request<{
+      roi: number;
+      paybackPeriodYears: number | null;
+      irr: number | null;
+      cagr: number | null;
+      forecastAnnualIncome: number | null;
+      yieldPercent: number | null;
+    }>(`/portfolio/properties/${id}/analytics`);
   },
 
   async createProperty(data: CreatePropertyDto) {
