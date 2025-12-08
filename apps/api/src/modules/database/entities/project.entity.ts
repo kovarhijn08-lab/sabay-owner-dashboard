@@ -15,7 +15,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 @Entity('projects')
 export class Project {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id!: string; // В базе хранится как varchar, но это UUID строка
 
   // === Основная информация ===
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSourceOptions } from 'typeorm';
+import * as path from 'path';
 import * as entities from './entities';
 
 @Module({
@@ -21,9 +22,9 @@ import * as entities from './entities';
         } else {
           return {
             type: 'better-sqlite3',
-            database: configService.get<string>('DATABASE_PATH', './data/database.sqlite'),
+            database: configService.get<string>('DATABASE_PATH', '/Users/v.goncharov/Desktop/Program/Sabay Owner Dashboard/data/database.sqlite'),
             entities: Object.values(entities),
-            synchronize: true,
+            synchronize: false, // Отключаем синхронизацию, чтобы не пересоздавать таблицы
             logging: configService.get<string>('NODE_ENV') === 'development',
           };
         }
