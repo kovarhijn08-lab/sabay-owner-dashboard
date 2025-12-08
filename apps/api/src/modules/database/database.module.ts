@@ -22,7 +22,9 @@ import * as entities from './entities';
         } else {
           return {
             type: 'better-sqlite3',
-            database: configService.get<string>('DATABASE_PATH', '/Users/v.goncharov/Desktop/Program/Sabay Owner Dashboard/data/database.sqlite'),
+            database: configService.get<string>('DATABASE_PATH', 
+              path.resolve(process.cwd(), 'data/database.sqlite')
+            ),
             entities: Object.values(entities),
             synchronize: false, // Отключаем синхронизацию, чтобы не пересоздавать таблицы
             logging: configService.get<string>('NODE_ENV') === 'development',

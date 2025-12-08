@@ -55,7 +55,7 @@ export class CatalogService {
         params.push(region);
       }
       
-      query += ' ORDER BY name ASC LIMIT 100';
+      query += ' ORDER BY name ASC';
       
       const rawProjects = await this.dataSource.query(query, params);
       console.log(`[CatalogService] Raw query returned ${rawProjects.length} projects`);
@@ -137,12 +137,17 @@ export class CatalogService {
    * Получить список регионов (уникальные значения)
    */
   async getRegions() {
-    const projects = await this.projectRepository.find({
-      where: { deletedAt: IsNull() },
-      select: ['region'],
-    });
+    // Используем raw query для получения регионов
+    const query = `
+      SELECT DISTINCT region 
+      FROM projects 
+      WHERE (deletedAt IS NULL OR deletedAt = '') 
+        AND region IS NOT NULL 
+        AND region != ''
+      ORDER BY region ASC
+    `;
     
-    const regions = [...new Set(projects.map(p => p.region).filter(Boolean))];
-    return regions.sort();
+    const result = await this.dataSource.query(query);
+    return result.map((row: any) => row.region).filter(Boolean);
   }
 }

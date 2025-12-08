@@ -70,3 +70,12 @@ Desktop.ini
 # Misc
 *.pem
 .eslintcache
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+data/database.sqlite
+apps/api/data/database.sqlite
+apps/api/database.sqlite
+apps/database.sqlite
