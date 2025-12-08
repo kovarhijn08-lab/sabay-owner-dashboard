@@ -1,0 +1,542 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { portfolioApi, PortfolioGoal, PortfolioForecasts, CreateGoalDto, OwnerProperty } from '../lib/api-client';
+import { useToastContext } from './ToastProvider';
+
+interface PropertyGoalsProps {
+  property: OwnerProperty;
+  onUpdate?: () => void;
+}
+
+const GOAL_TYPE_LABELS: Record<PortfolioGoal['goalType'], string> = {
+  roi: 'ROI (%)',
+  yearly_income: 'Годовой доход ($)',
+  properties_count: 'Количество объектов',
+  portfolio_value: 'Стоимость портфеля ($)',
+  value_growth: 'Прирост стоимости ($)',
+};
+
+export default function PropertyGoals({ property, onUpdate }: PropertyGoalsProps) {
+  const toast = useToastContext();
+  const [goals, setGoals] = useState<PortfolioGoal[]>([]);
+  const [forecasts, setForecasts] = useState<PortfolioForecasts | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newGoal, setNewGoal] = useState<CreateGoalDto>({
+    goalType: property.status === 'rental' ? 'yearly_income' : 'value_growth',
+    targetValue: 0,
+  });
+  const [deleteConfirmGoalId, setDeleteConfirmGoalId] = useState<string | null>(null);
+  const [editingGoal, setEditingGoal] = useState<PortfolioGoal | null>(null);
+  const [editForm, setEditForm] = useState<{ targetValue: number; targetDate?: string; description?: string }>({
+    targetValue: 0,
+  });
+
+  useEffect(() => {
+    loadData();
+  }, [property.id]);
+
+  // Обновляем данные при открытии вкладки и при событии обновления
+  useEffect(() => {
+    const handleFocus = () => {
+      loadData();
+    };
+    const handleGoalsUpdate = () => {
+      loadData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('goals-updated', handleGoalsUpdate);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('goals-updated', handleGoalsUpdate);
+    };
+  }, []);
+
+  async function loadData() {
+    try {
+      setLoading(true);
+      console.log('[PropertyGoals] Начинаем загрузку целей...');
+      const [goalsData, forecastsData] = await Promise.all([
+        portfolioApi.getActiveGoals(),
+        portfolioApi.getForecasts().catch(() => null),
+      ]);
+      console.log('[PropertyGoals] Загружены цели:', goalsData);
+      console.log('[PropertyGoals] Количество целей:', goalsData?.length || 0);
+      if (goalsData && goalsData.length > 0) {
+        console.log('[PropertyGoals] Детали целей:', goalsData.map(g => ({ id: g.id, goalType: g.goalType, status: g.status, targetValue: g.targetValue })));
+      }
+      setGoals(goalsData || []);
+      setForecasts(forecastsData);
+    } catch (err: any) {
+      console.error('Ошибка загрузки целей и прогнозов:', err);
+      toast.error('Не удалось загрузить цели и прогнозы');
+      setGoals([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreateGoal() {
+    if (!newGoal.targetValue || newGoal.targetValue <= 0) {
+      toast.error('Введите целевое значение');
+      return;
+    }
+
+    try {
+      console.log('[PropertyGoals] Создаем цель:', newGoal);
+      const createdGoal = await portfolioApi.createGoal(newGoal);
+      console.log('[PropertyGoals] Цель создана, ответ от API:', createdGoal);
+      console.log('[PropertyGoals] Статус созданной цели:', createdGoal?.status);
+      
+      toast.success('Цель создана');
+      setShowAddForm(false);
+      setNewGoal({ goalType: property.status === 'rental' ? 'yearly_income' : 'value_growth', targetValue: 0 });
+      
+      // Добавляем созданную цель в список сразу (оптимистичное обновление)
+      if (createdGoal && createdGoal.status === 'active') {
+        setGoals(prev => [createdGoal, ...prev]);
+        console.log('[PropertyGoals] Цель добавлена в список оптимистично');
+      }
+      
+      // Небольшая задержка, чтобы сервер успел обработать обновление прогресса
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Перезагружаем список целей с сервера
+      await loadData();
+      console.log('[PropertyGoals] Данные перезагружены после создания цели');
+      
+      // Отправляем событие обновления портфеля
+      window.dispatchEvent(new CustomEvent('portfolio-updated'));
+      
+      onUpdate?.();
+    } catch (err: any) {
+      console.error('Ошибка создания цели:', err);
+      toast.error(err?.message || 'Не удалось создать цель');
+    }
+  }
+
+  function getProgress(goal: PortfolioGoal): number {
+    if (goal.currentValue === null || goal.targetValue === 0) return 0;
+    return Math.min((goal.currentValue / goal.targetValue) * 100, 100);
+  }
+
+  function formatValue(value: number | null, goalType: PortfolioGoal['goalType']): string {
+    if (value === null) return 'N/A';
+    if (goalType === 'roi') return `${value.toFixed(1)}%`;
+    if (goalType === 'properties_count') return Math.round(value).toString();
+    return `$${value.toLocaleString()}`;
+  }
+
+  async function handleDeleteGoal(goalId: string) {
+    try {
+      await portfolioApi.deleteGoal(goalId);
+      toast.success('Цель удалена');
+      setDeleteConfirmGoalId(null);
+      await loadData();
+      onUpdate?.();
+    } catch (err: any) {
+      console.error('Ошибка удаления цели:', err);
+      toast.error(err?.message || 'Не удалось удалить цель');
+    }
+  }
+
+  async function handleArchiveGoal(goalId: string) {
+    try {
+      await portfolioApi.updateGoal(goalId, { status: 'archived' });
+      toast.success('Цель архивирована');
+      await loadData();
+      onUpdate?.();
+    } catch (err: any) {
+      console.error('Ошибка архивирования цели:', err);
+      toast.error(err?.message || 'Не удалось архивировать цель');
+    }
+  }
+
+  function startEdit(goal: PortfolioGoal) {
+    setEditingGoal(goal);
+    setEditForm({
+      targetValue: goal.targetValue,
+      targetDate: goal.targetDate || undefined,
+      description: goal.description || undefined,
+    });
+  }
+
+  async function handleUpdateGoal() {
+    if (!editingGoal) return;
+    if (!editForm.targetValue || editForm.targetValue <= 0) {
+      toast.error('Введите целевое значение');
+      return;
+    }
+
+    try {
+      await portfolioApi.updateGoal(editingGoal.id, editForm);
+      toast.success('Цель обновлена');
+      setEditingGoal(null);
+      await loadData();
+      onUpdate?.();
+    } catch (err: any) {
+      console.error('Ошибка обновления цели:', err);
+      toast.error(err?.message || 'Не удалось обновить цель');
+    }
+  }
+
+  // Прогнозы для конкретного объекта
+  const propertyForecast = property.status === 'rental' 
+    ? {
+        yearlyIncome: property.metrics?.reduce((sum, m) => sum + Number(m.yearlyIncome || 0), 0) || 0,
+        valueGrowth: (Number(property.currentEstimate) || Number(property.purchasePrice) || 0) - (Number(property.purchasePrice) || 0),
+      }
+    : {
+        yearlyIncome: property.expectedAdr && property.expectedOccupancy
+          ? Number(property.expectedAdr) * 365 * (Number(property.expectedOccupancy) / 100)
+          : 0,
+        valueGrowth: (Number(property.currentEstimate) || Number(property.purchasePrice) || 0) - (Number(property.purchasePrice) || 0),
+      };
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+        <div className="text-center text-white/60">Загрузка...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Прогнозы для объекта */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span>🔮</span>
+          <span>Прогнозы для объекта</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/60 mb-1">
+              {property.status === 'rental' ? 'Прогноз годового дохода' : 'Прогнозируемый доход после завершения'}
+            </div>
+            <div className="text-xl font-semibold text-green-400">
+              ${propertyForecast.yearlyIncome.toLocaleString()}
+            </div>
+            {property.status === 'rental' && (
+              <div className="text-xs text-white/40 mt-1">На основе текущих метрик</div>
+            )}
+            {property.status === 'construction' && (
+              <div className="text-xs text-white/40 mt-1">
+                ADR: ${property.expectedAdr?.toLocaleString() || 'N/A'} × Занятость: {property.expectedOccupancy || 'N/A'}%
+              </div>
+            )}
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/60 mb-1">Прогноз прироста стоимости</div>
+            <div className={`text-xl font-semibold ${propertyForecast.valueGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              ${propertyForecast.valueGrowth.toLocaleString()}
+            </div>
+            <div className="text-xs text-white/40 mt-1">
+              {propertyForecast.valueGrowth >= 0 ? 'Капитальный прирост' : 'Убыток'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Цели портфеля (все цели, не только для объекта) */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <span>🎯</span>
+            <span>Цели портфеля</span>
+          </h2>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="rounded-lg border border-sabay-primary bg-sabay-primary/10 px-4 py-2 text-sm font-medium text-sabay-primary transition hover:bg-sabay-primary/20"
+          >
+            {showAddForm ? 'Отмена' : '+ Добавить цель'}
+          </button>
+        </div>
+
+        {/* Форма добавления цели */}
+        {showAddForm && (
+          <div className="mb-6 p-4 rounded-lg border border-white/10 bg-white/5">
+            <h3 className="text-sm font-medium mb-4">Новая цель</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Тип цели</label>
+                <select
+                  value={newGoal.goalType}
+                  onChange={(e) => setNewGoal({ ...newGoal, goalType: e.target.value as PortfolioGoal['goalType'] })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                >
+                  {Object.entries(GOAL_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Целевое значение</label>
+                <input
+                  type="number"
+                  value={newGoal.targetValue || ''}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetValue: parseFloat(e.target.value) || 0 })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  placeholder="Введите значение"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Период начала (опционально)</label>
+                <input
+                  type="date"
+                  value={newGoal.periodFrom || ''}
+                  onChange={(e) => setNewGoal({ ...newGoal, periodFrom: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  title="С какой даты учитывать данные для расчета цели"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Период окончания (опционально)</label>
+                <input
+                  type="date"
+                  value={newGoal.periodTo || ''}
+                  onChange={(e) => setNewGoal({ ...newGoal, periodTo: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  title="По какую дату учитывать данные для расчета цели"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Дата достижения цели (опционально)</label>
+                <input
+                  type="date"
+                  value={newGoal.targetDate || ''}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Описание (опционально)</label>
+                <input
+                  type="text"
+                  value={newGoal.description || ''}
+                  onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  placeholder="Краткое описание"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={handleCreateGoal}
+                className="rounded-lg bg-sabay-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-sabay-primary/80"
+              >
+                Создать
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewGoal({ goalType: property.status === 'rental' ? 'yearly_income' : 'value_growth', targetValue: 0 });
+                }}
+                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition hover:bg-white/10"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Форма редактирования цели */}
+        {editingGoal && (
+          <div className="mb-6 p-4 rounded-lg border border-blue-500/30 bg-blue-500/10">
+            <h3 className="text-sm font-medium mb-4">Редактирование цели</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Целевое значение</label>
+                <input
+                  type="number"
+                  value={editForm.targetValue || ''}
+                  onChange={(e) => setEditForm({ ...editForm, targetValue: parseFloat(e.target.value) || 0 })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  placeholder="Введите значение"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Период начала (опционально)</label>
+                <input
+                  type="date"
+                  value={editForm.periodFrom || ''}
+                  onChange={(e) => setEditForm({ ...editForm, periodFrom: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  title="С какой даты учитывать данные для расчета цели"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Период окончания (опционально)</label>
+                <input
+                  type="date"
+                  value={editForm.periodTo || ''}
+                  onChange={(e) => setEditForm({ ...editForm, periodTo: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  title="По какую дату учитывать данные для расчета цели"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Дата достижения цели (опционально)</label>
+                <input
+                  type="date"
+                  value={editForm.targetDate || ''}
+                  onChange={(e) => setEditForm({ ...editForm, targetDate: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Описание (опционально)</label>
+                <input
+                  type="text"
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value || undefined })}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-sabay-primary"
+                  placeholder="Краткое описание"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={handleUpdateGoal}
+                className="rounded-lg bg-sabay-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-sabay-primary/80"
+              >
+                Сохранить
+              </button>
+              <button
+                onClick={() => setEditingGoal(null)}
+                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition hover:bg-white/10"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Список целей */}
+        {goals.length === 0 ? (
+          <div className="text-center py-8 text-white/60">
+            Нет активных целей. Добавьте первую цель, чтобы отслеживать прогресс.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {goals.map((goal) => {
+              const progress = getProgress(goal);
+              const isCompleted = goal.status === 'completed' || progress >= 100;
+
+              return (
+                <div
+                  key={goal.id}
+                  className={`rounded-lg border p-4 ${
+                    isCompleted
+                      ? 'border-green-500/30 bg-green-500/10'
+                      : 'border-white/10 bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium">{GOAL_TYPE_LABELS[goal.goalType]}</h3>
+                        {isCompleted && (
+                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400">
+                            Достигнуто
+                          </span>
+                        )}
+                      </div>
+                      {goal.description && (
+                        <p className="text-sm text-white/60 mb-2">{goal.description}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-4 text-sm">
+                        <span className="text-white/60">
+                          Текущее: <span className="text-white">{formatValue(goal.currentValue, goal.goalType)}</span>
+                        </span>
+                        <span className="text-white/60">
+                          Цель: <span className="text-white">{formatValue(goal.targetValue, goal.goalType)}</span>
+                        </span>
+                        {goal.targetDate && (
+                          <span className="text-white/60">
+                            До: <span className="text-white">{new Date(goal.targetDate).toLocaleDateString('ru-RU')}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {goal.status === 'active' && (
+                        <>
+                          <button
+                            onClick={() => startEdit(goal)}
+                            className="text-blue-400 hover:text-blue-300 text-sm"
+                            title="Редактировать"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleArchiveGoal(goal.id)}
+                            className="text-yellow-400 hover:text-yellow-300 text-sm"
+                            title="Архивировать"
+                          >
+                            📦
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => setDeleteConfirmGoalId(goal.id)}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                        title="Удалить"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs text-white/60 mb-1">
+                      <span>Прогресс</span>
+                      <span>{progress.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${
+                          isCompleted ? 'bg-green-500' : 'bg-sabay-primary'
+                        }`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Модальное окно подтверждения удаления */}
+        {deleteConfirmGoalId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setDeleteConfirmGoalId(null)}>
+            <div className="rounded-xl border border-white/10 bg-slate-900 p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold mb-4">Подтверждение удаления</h3>
+              <p className="text-white/60 mb-6">Вы уверены, что хотите удалить эту цель? Это действие нельзя отменить.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleDeleteGoal(deleteConfirmGoalId)}
+                  className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+                >
+                  Удалить
+                </button>
+                <button
+                  onClick={() => setDeleteConfirmGoalId(null)}
+                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition hover:bg-white/10"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
