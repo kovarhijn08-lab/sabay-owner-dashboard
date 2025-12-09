@@ -28,7 +28,7 @@ git config --global alias.branches "branch -a"
 
 # Алиасы для сохранения
 git config --global alias.save "!f() { git add -A && git commit -m \"$1\" && git push; }; f"
-git config --global alias.save-all "!git add -A && git commit -m 'Auto-save: $(date +%Y-%m-%d\\ %H:%M:%S)' && git push"
+git config --global alias.save-all "!f() { git add -A && git commit -m \"Auto-save: $(date '+%Y-%m-%d %H:%M:%S')\" && git push; }; f"
 
 # Алиасы для очистки
 git config --global alias.cleanup "!git branch --merged | grep -v '\\*\\|main\\|master' | xargs -n 1 git branch -d"
