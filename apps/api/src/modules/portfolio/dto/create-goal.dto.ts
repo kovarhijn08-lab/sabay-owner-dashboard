@@ -1,8 +1,26 @@
-import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from "class-validator";
 
 export class CreateGoalDto {
-  @IsEnum(['roi', 'yearly_income', 'properties_count', 'portfolio_value', 'value_growth'])
-  goalType!: 'roi' | 'yearly_income' | 'properties_count' | 'portfolio_value' | 'value_growth';
+  @IsEnum([
+    "roi",
+    "yearly_income",
+    "properties_count",
+    "portfolio_value",
+    "value_growth",
+  ])
+  goalType!:
+    | "roi"
+    | "yearly_income"
+    | "properties_count"
+    | "portfolio_value"
+    | "value_growth";
 
   @IsNumber()
   @Min(0)

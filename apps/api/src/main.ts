@@ -1,6 +1,6 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './modules/app/app.module';
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { AppModule } from "./modules/app/app.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -8,17 +8,17 @@ async function bootstrap() {
   // Включаем CORS для работы с фронтендом
   app.enableCors({
     origin: [
-      process.env.FRONTEND_URL || 'http://localhost:3001',
-      'http://localhost:3000',
-      'http://localhost:3001',
+      process.env.FRONTEND_URL || "http://localhost:3001",
+      "http://localhost:3000",
+      "http://localhost:3001",
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
   // Глобальный префикс для всех роутов
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   // Глобальная валидация
   app.useGlobalPipes(
@@ -35,6 +35,6 @@ async function bootstrap() {
 }
 
 bootstrap().catch((error) => {
-  console.error('❌ Error starting server:', error);
+  console.error("❌ Error starting server:", error);
   process.exit(1);
 });

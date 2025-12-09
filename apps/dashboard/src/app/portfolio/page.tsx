@@ -248,10 +248,13 @@ export default function PortfolioPage() {
                     const chartWidth = width - paddingLeft - paddingRight;
                     const chartHeight = height - paddingTop - paddingBottom;
 
-                    // Форматирование дат
+                    // Форматирование дат для оси X - включает день, месяц и год
                     const formatDate = (dateStr: string) => {
                       const date = new Date(dateStr);
-                      return date.toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' });
+                      const day = date.getDate();
+                      const month = date.toLocaleDateString('ru-RU', { month: 'short' });
+                      const year = date.getFullYear().toString().slice(-2);
+                      return `${day} ${month} ${year} г.`;
                     };
 
                     // Форматирование стоимости
@@ -500,44 +503,54 @@ export default function PortfolioPage() {
               </div>
             )}
 
-            {/* Распределение по статусам */}
-            {chartData.statusDistribution && (
+            {/* Распределение по доходам */}
+            {chartData.incomeDistribution && (
               <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-                <h3 className="text-lg font-semibold mb-4">Распределение по статусам</h3>
+                <h3 className="text-lg font-semibold mb-4">Распределение по доходам</h3>
                 <div className="space-y-4">
-                  {Object.values(chartData.statusDistribution).every((v: any) => v === 0) ? (
+                  {Object.values(chartData.incomeDistribution).every((v: any) => v === 0) ? (
                     <div className="text-center py-8 text-white/40">
                       <svg className="mx-auto h-12 w-12 text-white/20 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p>Нет данных для отображения</p>
+                      <p>Нет данных о доходах для отображения</p>
                     </div>
                   ) : (
                     <>
-                      {Object.entries(chartData.statusDistribution || {}).map(([status, count]: [string, unknown]) => {
-                        const countNum: number = typeof count === 'number' ? count : 0;
-                        const statusDist = (chartData.statusDistribution || {}) as Record<string, number>;
-                        const total: number = Object.values(statusDist).reduce((a: number, b: number) => a + b, 0);
-                        const percentage: number = total > 0 && countNum >= 0 ? (countNum / total) * 100 : 0;
-                        const statusLabels: Record<string, string> = {
-                          rental: 'В аренде',
-                          under_construction: 'В строительстве',
-                          closed: 'Закрыто',
+                      {Object.entries(chartData.incomeDistribution || {}).map(([category, income]: [string, unknown]) => {
+                        const incomeNum: number = typeof income === 'number' ? income : 0;
+                        const incomeDist = (chartData.incomeDistribution || {}) as Record<string, number>;
+                        const total: number = Object.values(incomeDist).reduce((a: number, b: number) => a + b, 0);
+                        const percentage: number = total > 0 && incomeNum >= 0 ? (incomeNum / total) * 100 : 0;
+                        const incomeLabels: Record<string, string> = {
+                          low: 'Низкий доход (0-100k ₽/год)',
+                          medium: 'Средний доход (100k-500k ₽/год)',
+                          high: 'Высокий доход (500k+ ₽/год)',
                         };
-                        const statusColors: Record<string, string> = {
-                          rental: 'bg-green-500',
-                          under_construction: 'bg-yellow-500',
-                          closed: 'bg-gray-500',
+                        const incomeColors: Record<string, string> = {
+                          low: 'bg-blue-500',
+                          medium: 'bg-green-500',
+                          high: 'bg-yellow-500',
+                        };
+                        const formatIncome = (value: number) => {
+                          if (value >= 1000000) {
+                            return `${(value / 1000000).toFixed(1)} млн ₽`;
+                          } else if (value >= 1000) {
+                            return `${(value / 1000).toFixed(0)} тыс ₽`;
+                          }
+                          return `${value.toFixed(0)} ₽`;
                         };
                         return (
-                          <div key={status}>
+                          <div key={category}>
                             <div className="flex justify-between items-center mb-1">
-                              <span className="text-white/80">{statusLabels[status] || status}</span>
-                              <span className="text-white/60">{countNum} ({percentage.toFixed(1)}%)</span>
+                              <span className="text-white/80">{incomeLabels[category] || category}</span>
+                              <span className="text-white/60">
+                                {formatIncome(incomeNum)} ({percentage.toFixed(1)}%)
+                              </span>
                             </div>
                             <div className="w-full bg-white/10 rounded-full h-2">
                               <div
-                                className={`${statusColors[status]} h-2 rounded-full transition-all`}
+                                className={`${incomeColors[category]} h-2 rounded-full transition-all`}
                                 style={{ width: `${percentage}%` }}
                               ></div>
                             </div>

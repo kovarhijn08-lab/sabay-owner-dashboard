@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Notification } from '../../database/entities/notification.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Notification } from "../../database/entities/notification.entity";
 
 @Injectable()
 export class NotificationService {
@@ -18,7 +18,7 @@ export class NotificationService {
 
     return this.notificationRepository.find({
       where,
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -28,7 +28,7 @@ export class NotificationService {
     });
 
     if (!notification) {
-      throw new Error('Уведомление не найдено');
+      throw new Error("Уведомление не найдено");
     }
 
     notification.isRead = true;

@@ -1,6 +1,6 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
-import { User } from '../../database/entities/user.entity';
+import { User } from "../../database/entities/user.entity";
 
 /**
  * Декоратор @CurrentUser() для получения текущего пользователя из request
@@ -17,5 +17,3 @@ export const CurrentUser = createParamDecorator(
     return request.user;
   },
 );
-
-

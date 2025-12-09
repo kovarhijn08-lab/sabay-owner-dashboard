@@ -1,12 +1,16 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
 
-import { User } from '../database/entities/user.entity';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { User } from "../database/entities/user.entity";
+import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
 
 /**
  * AuthService - сервис для аутентификации и регистрации пользователей
@@ -30,14 +34,18 @@ export class AuthService {
    * @param registerDto - данные для регистрации (логин, пароль, роль)
    * @returns созданный пользователь (без пароля)
    */
-  async register(registerDto: RegisterDto): Promise<Omit<User, 'passwordHash'>> {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<Omit<User, "passwordHash">> {
     // Проверяем, не существует ли уже пользователь с таким логином
     const existingUser = await this.userRepository.findOne({
       where: { login: registerDto.login },
     });
 
     if (existingUser) {
-      throw new ConflictException('Пользователь с таким логином уже существует');
+      throw new ConflictException(
+        "Пользователь с таким логином уже существует",
+      );
     }
 
     // Хэшируем пароль
@@ -48,7 +56,7 @@ export class AuthService {
     const user = this.userRepository.create({
       login: registerDto.login,
       passwordHash,
-      role: registerDto.role || 'manager',
+      role: registerDto.role || "manager",
       isActive: true,
     });
 
@@ -64,26 +72,31 @@ export class AuthService {
    * @param loginDto - данные для входа (логин, пароль)
    * @returns JWT токен и данные пользователя
    */
-  async login(loginDto: LoginDto): Promise<{ accessToken: string; user: Omit<User, 'passwordHash'> }> {
+  async login(
+    loginDto: LoginDto,
+  ): Promise<{ accessToken: string; user: Omit<User, "passwordHash"> }> {
     // Находим пользователя по логину
     const user = await this.userRepository.findOne({
       where: { login: loginDto.login },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Неверный логин или пароль');
+      throw new UnauthorizedException("Неверный логин или пароль");
     }
 
     // Проверяем, активен ли пользователь
     if (!user.isActive) {
-      throw new UnauthorizedException('Пользователь деактивирован');
+      throw new UnauthorizedException("Пользователь деактивирован");
     }
 
     // Проверяем пароль
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Неверный логин или пароль');
+      throw new UnauthorizedException("Неверный логин или пароль");
     }
 
     // Генерируем JWT токен
@@ -116,13 +129,13 @@ export class AuthService {
    * @param userId - ID пользователя из токена
    * @returns данные пользователя (без пароля)
    */
-  async getProfile(userId: string): Promise<Omit<User, 'passwordHash'>> {
+  async getProfile(userId: string): Promise<Omit<User, "passwordHash">> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Пользователь не найден');
+      throw new UnauthorizedException("Пользователь не найден");
     }
 
     const { passwordHash: _, ...userWithoutPassword } = user;
@@ -137,14 +150,20 @@ export class AuthService {
    */
   async updateProfile(
     userId: string,
-    updateData: { name?: string; whatsapp?: string; email?: string; bio?: string; photoUrl?: string },
-  ): Promise<Omit<User, 'passwordHash'>> {
+    updateData: {
+      name?: string;
+      whatsapp?: string;
+      email?: string;
+      bio?: string;
+      photoUrl?: string;
+    },
+  ): Promise<Omit<User, "passwordHash">> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Пользователь не найден');
+      throw new UnauthorizedException("Пользователь не найден");
     }
 
     // Обновляем только переданные поля
@@ -160,4 +179,3 @@ export class AuthService {
     return userWithoutPassword;
   }
 }
-

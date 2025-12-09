@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { OwnerProperty } from '../../database/entities/owner-property.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { OwnerProperty } from "../../database/entities/owner-property.entity";
 
 @Injectable()
 export class PortfolioService {
@@ -13,8 +13,8 @@ export class PortfolioService {
   async findAll() {
     return this.propertyRepository.find({
       where: { deletedAt: null },
-      relations: ['owner', 'manager', 'unit'],
-      order: { createdAt: 'DESC' },
+      relations: ["owner", "manager", "unit"],
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -24,11 +24,11 @@ export class PortfolioService {
   async getSummary(ownerId: string) {
     const properties = await this.propertyRepository.find({
       where: { ownerId, deletedAt: null },
-      relations: ['unit'],
+      relations: ["unit"],
     });
 
     const totalProperties = properties.length;
-    
+
     // Общая стоимость покупки
     const totalPurchaseValue = properties.reduce(
       (sum, p) => sum + (p.purchasePrice || 0),
@@ -43,27 +43,32 @@ export class PortfolioService {
 
     // Прирост стоимости
     const valueGrowth = totalCurrentValue - totalPurchaseValue;
-    const valueGrowthPercent = totalPurchaseValue > 0 
-      ? (valueGrowth / totalPurchaseValue) * 100 
-      : 0;
+    const valueGrowthPercent =
+      totalPurchaseValue > 0 ? (valueGrowth / totalPurchaseValue) * 100 : 0;
 
     // Объекты в аренде
-    const rentalProperties = properties.filter(p => p.status === 'rental');
+    const rentalProperties = properties.filter((p) => p.status === "rental");
     const rentalCount = rentalProperties.length;
 
     // Объекты в строительстве
-    const constructionProperties = properties.filter(p => p.status === 'under_construction');
+    const constructionProperties = properties.filter(
+      (p) => p.status === "under_construction",
+    );
     const constructionCount = constructionProperties.length;
 
     // Средний ROI (упрощенный расчет)
-    const averageROI = properties.length > 0
-      ? properties.reduce((sum, p) => {
-          const purchasePrice = p.purchasePrice || 0;
-          const currentValue = p.currentEstimate || purchasePrice;
-          const roi = purchasePrice > 0 ? ((currentValue - purchasePrice) / purchasePrice) * 100 : 0;
-          return sum + roi;
-        }, 0) / properties.length
-      : 0;
+    const averageROI =
+      properties.length > 0
+        ? properties.reduce((sum, p) => {
+            const purchasePrice = p.purchasePrice || 0;
+            const currentValue = p.currentEstimate || purchasePrice;
+            const roi =
+              purchasePrice > 0
+                ? ((currentValue - purchasePrice) / purchasePrice) * 100
+                : 0;
+            return sum + roi;
+          }, 0) / properties.length
+        : 0;
 
     return {
       totalProperties,
@@ -86,9 +91,9 @@ export class PortfolioService {
     });
 
     // Прогноз годового дохода от объектов в аренде
-    const rentalProperties = properties.filter(p => p.status === 'rental');
+    const rentalProperties = properties.filter((p) => p.status === "rental");
     let forecastYearlyIncome = 0;
-    rentalProperties.forEach(p => {
+    rentalProperties.forEach((p) => {
       if (p.expectedAdr && p.expectedOccupancy) {
         // Расчет: ADR * загрузка * 365 дней
         const dailyIncome = p.expectedAdr * (p.expectedOccupancy / 100);
@@ -97,9 +102,11 @@ export class PortfolioService {
     });
 
     // Прогноз дохода от объектов в строительстве (после завершения)
-    const constructionProperties = properties.filter(p => p.status === 'under_construction');
+    const constructionProperties = properties.filter(
+      (p) => p.status === "under_construction",
+    );
     let forecastConstructionIncome = 0;
-    constructionProperties.forEach(p => {
+    constructionProperties.forEach((p) => {
       if (p.expectedAdr && p.expectedOccupancy) {
         // Учитываем только если объект будет завершен в течение года
         const dailyIncome = p.expectedAdr * (p.expectedOccupancy / 100);
@@ -107,7 +114,13 @@ export class PortfolioService {
         if (p.plannedCompletionDate) {
           const completionDate = new Date(p.plannedCompletionDate);
           const now = new Date();
-          const daysUntilCompletion = Math.max(0, Math.floor((completionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+          const daysUntilCompletion = Math.max(
+            0,
+            Math.floor(
+              (completionDate.getTime() - now.getTime()) /
+                (1000 * 60 * 60 * 24),
+            ),
+          );
           if (daysUntilCompletion <= 365) {
             const remainingDays = 365 - daysUntilCompletion;
             forecastConstructionIncome += dailyIncome * remainingDays;
@@ -116,7 +129,8 @@ export class PortfolioService {
       }
     });
 
-    const totalForecastIncome = forecastYearlyIncome + forecastConstructionIncome;
+    const totalForecastIncome =
+      forecastYearlyIncome + forecastConstructionIncome;
 
     // Прогноз роста стоимости (упрощенный: средний рост 5% в год)
     const totalCurrentValue = properties.reduce(
@@ -139,36 +153,72 @@ export class PortfolioService {
   async getPortfolioChartData(ownerId: string) {
     const properties = await this.propertyRepository.find({
       where: { ownerId, deletedAt: null },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: "ASC" },
     });
 
     // Данные для графика динамики стоимости портфеля
-    const valueData: Array<{ date: string; purchaseValue: number; currentValue: number }> = [];
+    const valueData: Array<{
+      date: string;
+      purchaseValue: number;
+      currentValue: number;
+    }> = [];
     let cumulativePurchase = 0;
     let cumulativeCurrent = 0;
 
     properties.forEach((property, index) => {
       cumulativePurchase += property.purchasePrice || 0;
-      cumulativeCurrent += property.currentEstimate || property.purchasePrice || 0;
-      
+      cumulativeCurrent +=
+        property.currentEstimate || property.purchasePrice || 0;
+
       const date = property.createdAt || new Date();
       valueData.push({
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().split("T")[0],
         purchaseValue: cumulativePurchase,
         currentValue: cumulativeCurrent,
       });
     });
 
-    // Данные для графика распределения по статусам
-    const statusDistribution = {
-      rental: properties.filter(p => p.status === 'rental').length,
-      under_construction: properties.filter(p => p.status === 'under_construction').length,
-      closed: properties.filter(p => p.status === 'closed').length,
+    // Данные для графика распределения по доходам
+    // Рассчитываем доходы по категориям
+    let lowIncome = 0;    // 0 - 100k в год
+    let mediumIncome = 0;  // 100k - 500k в год
+    let highIncome = 0;    // 500k+ в год
+
+    properties.forEach((property) => {
+      // Рассчитываем годовой доход для каждого объекта
+      let yearlyIncome = 0;
+
+      if (property.status === "rental" && property.expectedAdr && property.expectedOccupancy) {
+        // Для объектов в аренде: ADR * Occupancy * 365
+        const dailyIncome = property.expectedAdr * (property.expectedOccupancy / 100);
+        yearlyIncome = dailyIncome * 365;
+      } else if (property.status === "under_construction" && property.expectedAdr && property.expectedOccupancy) {
+        // Для объектов в строительстве: прогноз дохода после завершения
+        const dailyIncome = property.expectedAdr * (property.expectedOccupancy / 100);
+        yearlyIncome = dailyIncome * 365;
+      }
+
+      // Распределяем по категориям
+      if (yearlyIncome === 0) {
+        // Без дохода не учитываем
+      } else if (yearlyIncome < 100000) {
+        lowIncome += yearlyIncome;
+      } else if (yearlyIncome < 500000) {
+        mediumIncome += yearlyIncome;
+      } else {
+        highIncome += yearlyIncome;
+      }
+    });
+
+    const incomeDistribution = {
+      low: Math.round(lowIncome),
+      medium: Math.round(mediumIncome),
+      high: Math.round(highIncome),
     };
 
     // Данные для графика распределения по регионам (топ-5)
     const regionCounts: Record<string, number> = {};
-    properties.forEach(p => {
+    properties.forEach((p) => {
       if (p.region) {
         regionCounts[p.region] = (regionCounts[p.region] || 0) + 1;
       }
@@ -180,7 +230,7 @@ export class PortfolioService {
 
     return {
       valueHistory: valueData,
-      statusDistribution,
+      incomeDistribution,
       topRegions,
     };
   }

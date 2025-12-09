@@ -1,5 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsUUID } from 'class-validator';
-import { Transform } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsUUID,
+} from "class-validator";
+import { Transform } from "class-transformer";
 
 export class CreatePropertyDto {
   @IsString()
@@ -11,11 +17,11 @@ export class CreatePropertyDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Transform(({ value }) => {
     // Преобразуем строку в число, убирая пробелы и запятые
-    if (typeof value === 'string') {
-      const cleaned = value.replace(/\s/g, '').replace(/,/g, '.');
+    if (typeof value === "string") {
+      const cleaned = value.replace(/\s/g, "").replace(/,/g, ".");
       return parseFloat(cleaned);
     }
-    return typeof value === 'number' ? value : parseFloat(value);
+    return typeof value === "number" ? value : parseFloat(value);
   })
   purchasePrice!: number;
 

@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsOptional, Min } from 'class-validator';
+import { IsNumber, IsString, IsOptional, Min } from "class-validator";
 
 /**
  * DTO для добавления записи в историю стоимости
@@ -20,4 +20,3 @@ export class AddValuationDto {
   @IsString()
   note?: string;
 }
-

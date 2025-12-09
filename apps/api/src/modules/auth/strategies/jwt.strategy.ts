@@ -1,10 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { ConfigService } from "@nestjs/config";
 
-import { AuthService } from '../auth.service';
-import { User } from '../../database/entities/user.entity';
+import { AuthService } from "../auth.service";
+import { User } from "../../database/entities/user.entity";
 
 /**
  * JWT Strategy - стратегия для проверки JWT токенов
@@ -25,7 +25,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // Извлекаем токен из заголовка Authorization: Bearer <token>
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       // Секретный ключ для проверки подписи токена
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'your-secret-key-change-in-production',
+      secretOrKey:
+        configService.get<string>("JWT_SECRET") ||
+        "your-secret-key-change-in-production",
       ignoreExpiration: false, // Проверяем срок действия токена
     });
   }
@@ -35,15 +37,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @param payload - данные из JWT токена (sub, login, role)
    * @returns данные пользователя (будут доступны в request.user)
    */
-  async validate(payload: { sub: string; login: string; role: string }): Promise<User> {
+  async validate(payload: {
+    sub: string;
+    login: string;
+    role: string;
+  }): Promise<User> {
     const user = await this.authService.validateUser(payload.sub);
 
     if (!user) {
-      throw new UnauthorizedException('Пользователь не найден или деактивирован');
+      throw new UnauthorizedException(
+        "Пользователь не найден или деактивирован",
+      );
     }
 
     return user;
   }
 }
-
-

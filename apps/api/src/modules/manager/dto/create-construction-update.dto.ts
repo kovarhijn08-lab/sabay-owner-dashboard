@@ -1,7 +1,17 @@
-import { IsInt, IsOptional, IsString, IsDateString, IsArray } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsArray,
+  Min,
+  Max,
+} from "class-validator";
 
 export class CreateConstructionUpdateDto {
   @IsInt()
+  @Min(0)
+  @Max(100)
   @IsOptional()
   progress?: number;
 

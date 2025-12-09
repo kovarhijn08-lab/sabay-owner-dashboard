@@ -1,6 +1,6 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
-import { OwnerProperty } from './owner-property.entity';
+import { OwnerProperty } from "./owner-property.entity";
 
 /**
  * Сущность PropertyEvent - событие/изменение по объекту
@@ -10,43 +10,45 @@ import { OwnerProperty } from './owner-property.entity';
  * - Значения до и после изменения
  * - Дата события
  */
-@Entity('property_events')
+@Entity("property_events")
 export class PropertyEvent {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
   // Связь с объектом
-  @ManyToOne(() => OwnerProperty, (property) => property.events, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => OwnerProperty, (property) => property.events, {
+    nullable: false,
+    onDelete: "CASCADE",
+  })
   property!: OwnerProperty;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   propertyId!: string;
 
   // Тип изменения
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: "varchar", length: 50 })
   changeType!:
-    | 'construction_progress'
-    | 'construction_stage'
-    | 'completion_date'
-    | 'booking_added'
-    | 'expense_added'
-    | 'income_updated'
-    | 'valuation_updated'
-    | 'status_changed';
+    | "construction_progress"
+    | "construction_stage"
+    | "completion_date"
+    | "booking_added"
+    | "expense_added"
+    | "income_updated"
+    | "valuation_updated"
+    | "status_changed";
 
   // Значение до изменения (JSON)
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   beforeValue!: any;
 
   // Значение после изменения (JSON)
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   afterValue!: any;
 
   // Описание изменения (для отображения в ленте)
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   description!: string | null;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
   createdAt!: Date;
 }
-

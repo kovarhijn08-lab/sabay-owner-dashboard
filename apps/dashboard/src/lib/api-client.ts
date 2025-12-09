@@ -45,6 +45,8 @@ interface OwnerProperty {
   actualCompletionDate?: string | null;
   expectedAdr?: number | null;
   expectedOccupancy?: number | null;
+  lastConstructionUpdateAt?: string | null;
+  lastRentalUpdateAt?: string | null;
   riskLevel?: 'low' | 'medium' | 'high';
   isActive?: boolean;
   createdAt?: string;
@@ -236,6 +238,92 @@ export const adminApi = {
   },
 };
 
+// Manager API interfaces
+export interface ConstructionUpdate {
+  id: string;
+  propertyId: string;
+  progress: number | null;
+  stage: string | null;
+  updateDate: string | null;
+  description: string | null;
+  photos: string[];
+  createdById: string | null;
+  createdAt: string;
+}
+
+export interface Booking {
+  id: string;
+  propertyId: string;
+  checkinDate: string;
+  checkoutDate: string;
+  source: string;
+  amount: number;
+  comment: string | null;
+  guestName: string | null;
+  createdById: string;
+  createdAt: string;
+}
+
+export interface Expense {
+  id: string;
+  propertyId: string;
+  expenseDate: string;
+  expenseType: string;
+  amount: number;
+  description: string | null;
+  createdById: string;
+  createdAt: string;
+}
+
+export interface Payout {
+  id: string;
+  propertyId: string;
+  periodFrom: string;
+  periodTo: string;
+  amount: number;
+  status: 'planned' | 'paid' | 'delayed';
+  payoutDate: string | null;
+  paymentMethod: string | null;
+  description: string | null;
+  createdById: string;
+  createdAt: string;
+}
+
+export interface Valuation {
+  id: string;
+  propertyId: string;
+  value: number;
+  valuationDate: string;
+  source: string | null;
+  notes: string | null;
+  createdById: string;
+  createdAt: string;
+}
+
+export interface Document {
+  id: string;
+  propertyId: string;
+  type: string;
+  fileName: string;
+  fileUrl: string;
+  version: number;
+  description: string | null;
+  uploadedById: string;
+  createdAt: string;
+}
+
+export interface PropertyEvent {
+  id: string;
+  propertyId: string;
+  changeType: string;
+  description: string | null;
+  beforeValue: any;
+  afterValue: any;
+  metadata: any;
+  createdById: string | null;
+  createdAt: string;
+}
+
 export const managerApi = {
   async getMyProperties() {
     return request<OwnerProperty[]>('/manager/properties');
@@ -243,6 +331,213 @@ export const managerApi = {
 
   async getPropertyById(id: string) {
     return request<OwnerProperty>(`/manager/properties/${id}`);
+  },
+
+  // Construction Updates
+  async getConstructionUpdates(propertyId: string) {
+    return request<ConstructionUpdate[]>(`/manager/properties/${propertyId}/construction-updates`);
+  },
+
+  async addConstructionUpdate(propertyId: string, data: {
+    progress?: number;
+    stage?: string;
+    updateDate?: string;
+    description?: string;
+    photos?: string[];
+    reasonForDecrease?: string;
+  }) {
+    return request<ConstructionUpdate>(`/manager/properties/${propertyId}/construction-updates`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateConstructionUpdate(updateId: string, data: {
+    progress?: number;
+    stage?: string;
+    updateDate?: string;
+    description?: string;
+    photos?: string[];
+    reasonForDecrease?: string;
+  }) {
+    return request<ConstructionUpdate>(`/manager/construction-updates/${updateId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteConstructionUpdate(updateId: string) {
+    return request(`/manager/construction-updates/${updateId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Bookings
+  async getBookings(propertyId: string) {
+    return request<Booking[]>(`/manager/properties/${propertyId}/bookings`);
+  },
+
+  async addBooking(propertyId: string, data: {
+    checkIn: string;
+    checkOut: string;
+    totalAmount: number;
+    source: string;
+    guestName?: string;
+    description?: string;
+  }) {
+    return request<Booking>(`/manager/properties/${propertyId}/bookings`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateBooking(bookingId: string, data: {
+    checkIn?: string;
+    checkOut?: string;
+    totalAmount?: number;
+    source?: string;
+    guestName?: string;
+    description?: string;
+  }) {
+    return request<Booking>(`/manager/bookings/${bookingId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteBooking(bookingId: string) {
+    return request(`/manager/bookings/${bookingId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Expenses
+  async getExpenses(propertyId: string) {
+    return request<Expense[]>(`/manager/properties/${propertyId}/expenses`);
+  },
+
+  async addExpense(propertyId: string, data: {
+    amount: number;
+    expenseType: string;
+    expenseDate: string;
+    description?: string;
+  }) {
+    return request<Expense>(`/manager/properties/${propertyId}/expenses`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateExpense(expenseId: string, data: {
+    amount?: number;
+    expenseType?: string;
+    expenseDate?: string;
+    description?: string;
+  }) {
+    return request<Expense>(`/manager/expenses/${expenseId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteExpense(expenseId: string) {
+    return request(`/manager/expenses/${expenseId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Payouts
+  async getPayouts(propertyId: string) {
+    return request<Payout[]>(`/manager/properties/${propertyId}/payouts`);
+  },
+
+  async createPayout(propertyId: string, data: {
+    amount: number;
+    payoutDate: string;
+    paymentMethod?: string;
+    description?: string;
+  }) {
+    return request<Payout>(`/manager/properties/${propertyId}/payouts`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updatePayout(payoutId: string, data: {
+    amount?: number;
+    payoutDate?: string;
+    paymentMethod?: string;
+    description?: string;
+    status?: 'planned' | 'paid' | 'delayed';
+  }) {
+    return request<Payout>(`/manager/payouts/${payoutId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deletePayout(payoutId: string) {
+    return request(`/manager/payouts/${payoutId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Valuations
+  async getValuations(propertyId: string) {
+    return request<Valuation[]>(`/manager/properties/${propertyId}/valuations`);
+  },
+
+  async addValuation(propertyId: string, data: {
+    value: number;
+    valuationDate: string;
+    source?: string;
+    notes?: string;
+  }) {
+    return request<Valuation>(`/manager/properties/${propertyId}/valuations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateValuation(valuationId: string, data: {
+    value?: number;
+    valuationDate?: string;
+    source?: string;
+    notes?: string;
+  }) {
+    return request<Valuation>(`/manager/valuations/${valuationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Documents
+  async getDocuments(propertyId: string) {
+    return request<Document[]>(`/manager/properties/${propertyId}/documents`);
+  },
+
+  async uploadDocument(propertyId: string, data: {
+    documentType: string;
+    fileName: string;
+    fileUrl: string;
+    description?: string;
+  }) {
+    return request<Document>(`/manager/properties/${propertyId}/documents`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteDocument(documentId: string) {
+    return request(`/manager/documents/${documentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Events
+  async getPropertyEvents(propertyId: string, limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return request<PropertyEvent[]>(`/manager/properties/${propertyId}/events${query}`);
   },
 };
 

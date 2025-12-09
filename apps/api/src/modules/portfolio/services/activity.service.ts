@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PropertyEvent } from '../../database/entities/property-event.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { PropertyEvent } from "../../database/entities/property-event.entity";
 
 @Injectable()
 export class ActivityService {
@@ -13,8 +13,8 @@ export class ActivityService {
   async findByPropertyId(propertyId: string, limit: number = 50) {
     return this.eventRepository.find({
       where: { propertyId },
-      relations: ['createdBy'],
-      order: { createdAt: 'DESC' },
+      relations: ["createdBy"],
+      order: { createdAt: "DESC" },
       take: limit,
     });
   }

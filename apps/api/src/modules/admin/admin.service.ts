@@ -1,25 +1,29 @@
 /**
  * AdminService - сервис для административных операций
  */
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, FindOptionsWhere } from "typeorm";
+import * as bcrypt from "bcrypt";
 
-import { User } from '../database/entities/user.entity';
-import { OwnerProperty } from '../database/entities/owner-property.entity';
-import { Dictionary } from '../database/entities/dictionary.entity';
-import { SLASettings } from '../database/entities/sla-settings.entity';
-import { PropertyEvent } from '../database/entities/property-event.entity';
-import { Project } from '../database/entities/project.entity';
-import { Unit } from '../database/entities/unit.entity';
-import { ManagementCompany } from '../database/entities/management-company.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateDictionaryDto } from './dto/create-dictionary.dto';
-import { UpdateDictionaryDto } from './dto/update-dictionary.dto';
-import { AssignManagerDto } from './dto/assign-manager.dto';
-import { UpdateSLASettingsDto } from './dto/update-sla-settings.dto';
+import { User } from "../database/entities/user.entity";
+import { OwnerProperty } from "../database/entities/owner-property.entity";
+import { Dictionary } from "../database/entities/dictionary.entity";
+import { SLASettings } from "../database/entities/sla-settings.entity";
+import { PropertyEvent } from "../database/entities/property-event.entity";
+import { Project } from "../database/entities/project.entity";
+import { Unit } from "../database/entities/unit.entity";
+import { ManagementCompany } from "../database/entities/management-company.entity";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { CreateDictionaryDto } from "./dto/create-dictionary.dto";
+import { UpdateDictionaryDto } from "./dto/update-dictionary.dto";
+import { AssignManagerDto } from "./dto/assign-manager.dto";
+import { UpdateSLASettingsDto } from "./dto/update-sla-settings.dto";
 
 @Injectable()
 export class AdminService {
@@ -51,7 +55,7 @@ export class AdminService {
 
     return this.userRepository.find({
       where,
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -64,9 +68,13 @@ export class AdminService {
   }
 
   async createUser(createDto: CreateUserDto) {
-    const existing = await this.userRepository.findOne({ where: { login: createDto.login } });
+    const existing = await this.userRepository.findOne({
+      where: { login: createDto.login },
+    });
     if (existing) {
-      throw new BadRequestException('Пользователь с таким логином уже существует');
+      throw new BadRequestException(
+        "Пользователь с таким логином уже существует",
+      );
     }
 
     const passwordHash = await bcrypt.hash(createDto.password, 10);
@@ -82,14 +90,18 @@ export class AdminService {
     const user = await this.findUserById(id);
 
     if (updateDto.login && updateDto.login !== user.login) {
-      const existing = await this.userRepository.findOne({ where: { login: updateDto.login } });
+      const existing = await this.userRepository.findOne({
+        where: { login: updateDto.login },
+      });
       if (existing) {
-        throw new BadRequestException('Пользователь с таким логином уже существует');
+        throw new BadRequestException(
+          "Пользователь с таким логином уже существует",
+        );
       }
     }
 
     if (updateDto.password) {
-      updateDto.password = await bcrypt.hash(updateDto.password, 10) as any;
+      updateDto.password = (await bcrypt.hash(updateDto.password, 10)) as any;
     }
 
     Object.assign(user, updateDto);
@@ -110,7 +122,7 @@ export class AdminService {
 
     return this.dictionaryRepository.find({
       where,
-      order: { sortOrder: 'ASC', label: 'ASC' },
+      order: { sortOrder: "ASC", label: "ASC" },
     });
   }
 
@@ -127,7 +139,9 @@ export class AdminService {
       where: { type: createDto.type, key: createDto.key },
     });
     if (existing) {
-      throw new BadRequestException(`Запись с ключом "${createDto.key}" уже существует в справочнике "${createDto.type}"`);
+      throw new BadRequestException(
+        `Запись с ключом "${createDto.key}" уже существует в справочнике "${createDto.type}"`,
+      );
     }
 
     const dict = this.dictionaryRepository.create({
@@ -154,18 +168,19 @@ export class AdminService {
   // ========== Управление SLA настройками ==========
 
   async findAllSLASettings() {
-    return this.slaRepository.find({ order: { type: 'ASC' } });
+    return this.slaRepository.find({ order: { type: "ASC" } });
   }
 
-  async findSLASettingsByType(type: 'construction_update' | 'rental_update') {
+  async findSLASettingsByType(type: "construction_update" | "rental_update") {
     let settings = await this.slaRepository.findOne({ where: { type } });
     if (!settings) {
       settings = this.slaRepository.create({
         type,
-        mode: type === 'construction_update' ? 'monthly_window' : 'days_threshold',
-        windowStartDay: type === 'construction_update' ? 1 : null,
-        windowEndDay: type === 'construction_update' ? 5 : null,
-        thresholdDays: type === 'rental_update' ? 30 : null,
+        mode:
+          type === "construction_update" ? "monthly_window" : "days_threshold",
+        windowStartDay: type === "construction_update" ? 1 : null,
+        windowEndDay: type === "construction_update" ? 5 : null,
+        thresholdDays: type === "rental_update" ? 30 : null,
         isActive: true,
       });
       settings = await this.slaRepository.save(settings);
@@ -173,12 +188,19 @@ export class AdminService {
     return settings;
   }
 
-  async updateSLASettings(type: 'construction_update' | 'rental_update', updateDto: UpdateSLASettingsDto) {
+  async updateSLASettings(
+    type: "construction_update" | "rental_update",
+    updateDto: UpdateSLASettingsDto,
+  ) {
     let settings = await this.slaRepository.findOne({ where: { type } });
     if (!settings) {
       settings = this.slaRepository.create({
         type,
-        mode: updateDto.mode || (type === 'construction_update' ? 'monthly_window' : 'days_threshold'),
+        mode:
+          updateDto.mode ||
+          (type === "construction_update"
+            ? "monthly_window"
+            : "days_threshold"),
         windowStartDay: updateDto.windowStartDay ?? null,
         windowEndDay: updateDto.windowEndDay ?? null,
         thresholdDays: updateDto.thresholdDays ?? null,
@@ -192,7 +214,11 @@ export class AdminService {
 
   // ========== Управление объектами и назначение менеджеров ==========
 
-  async findAllProperties(managerId?: string, ownerId?: string, status?: string) {
+  async findAllProperties(
+    managerId?: string,
+    ownerId?: string,
+    status?: string,
+  ) {
     const where: FindOptionsWhere<OwnerProperty> = {};
     if (managerId) where.managerId = managerId;
     if (ownerId) where.ownerId = ownerId;
@@ -200,15 +226,19 @@ export class AdminService {
 
     return this.propertyRepository.find({
       where,
-      relations: ['owner', 'manager', 'unit', 'managementCompany'],
-      order: { createdAt: 'DESC' },
+      relations: ["owner", "manager", "unit", "managementCompany"],
+      order: { createdAt: "DESC" },
     });
   }
 
-  async assignManager(propertyId: string, assignDto: AssignManagerDto, adminUserId?: string) {
+  async assignManager(
+    propertyId: string,
+    assignDto: AssignManagerDto,
+    adminUserId?: string,
+  ) {
     const property = await this.propertyRepository.findOne({
       where: { id: propertyId },
-      relations: ['owner', 'manager'],
+      relations: ["owner", "manager"],
     });
     if (!property) {
       throw new NotFoundException(`Объект с ID ${propertyId} не найден`);
@@ -220,9 +250,13 @@ export class AdminService {
       const newManagerId = assignDto.managerId;
 
       if (assignDto.managerId) {
-        const manager = await this.userRepository.findOne({ where: { id: assignDto.managerId } });
-        if (!manager || manager.role !== 'manager') {
-          throw new BadRequestException('Указанный пользователь не является менеджером');
+        const manager = await this.userRepository.findOne({
+          where: { id: assignDto.managerId },
+        });
+        if (!manager || manager.role !== "manager") {
+          throw new BadRequestException(
+            "Указанный пользователь не является менеджером",
+          );
         }
       }
 
@@ -233,12 +267,14 @@ export class AdminService {
         const event = this.eventRepository.create({
           propertyId: property.id,
           createdById: adminUserId || null,
-          changeType: oldManagerId === null ? 'manager_assigned' : 'manager_changed',
+          changeType:
+            oldManagerId === null ? "manager_assigned" : "manager_changed",
           beforeValue: { managerId: oldManagerId },
           afterValue: { managerId: newManagerId },
-          description: oldManagerId === null
-            ? `Менеджер назначен на объект "${property.name}"`
-            : `Менеджер изменен на объекте "${property.name}"`,
+          description:
+            oldManagerId === null
+              ? `Менеджер назначен на объект "${property.name}"`
+              : `Менеджер изменен на объекте "${property.name}"`,
         });
         await this.eventRepository.save(event);
       }
@@ -250,12 +286,16 @@ export class AdminService {
       const newOwnerId = assignDto.ownerId;
 
       if (assignDto.ownerId) {
-        const owner = await this.userRepository.findOne({ where: { id: assignDto.ownerId } });
+        const owner = await this.userRepository.findOne({
+          where: { id: assignDto.ownerId },
+        });
         if (!owner) {
-          throw new BadRequestException('Пользователь не найден');
+          throw new BadRequestException("Пользователь не найден");
         }
-        if (owner.role !== 'owner') {
-          throw new BadRequestException('Указанный пользователь не является владельцем. Роль должна быть "owner"');
+        if (owner.role !== "owner") {
+          throw new BadRequestException(
+            'Указанный пользователь не является владельцем. Роль должна быть "owner"',
+          );
         }
       }
 
@@ -266,7 +306,7 @@ export class AdminService {
         const event = this.eventRepository.create({
           propertyId: property.id,
           createdById: adminUserId || null,
-          changeType: 'owner_changed',
+          changeType: "owner_changed",
           beforeValue: { ownerId: oldOwnerId },
           afterValue: { ownerId: newOwnerId },
           description: `Владелец изменен на объекте "${property.name}"`,
@@ -281,9 +321,11 @@ export class AdminService {
       const newCompanyId = assignDto.managementCompanyId;
 
       if (assignDto.managementCompanyId) {
-        const company = await this.managementCompanyRepository.findOne({ where: { id: assignDto.managementCompanyId } });
+        const company = await this.managementCompanyRepository.findOne({
+          where: { id: assignDto.managementCompanyId },
+        });
         if (!company) {
-          throw new BadRequestException('Управляющая компания не найдена');
+          throw new BadRequestException("Управляющая компания не найдена");
         }
       }
 
@@ -294,10 +336,10 @@ export class AdminService {
         const event = this.eventRepository.create({
           propertyId: property.id,
           createdById: adminUserId || null,
-          changeType: 'management_company_assigned',
+          changeType: "management_company_assigned",
           beforeValue: { managementCompanyId: oldCompanyId },
           afterValue: { managementCompanyId: newCompanyId },
-          description: `Управляющая компания ${newCompanyId ? 'назначена' : 'удалена'} на объекте "${property.name}"`,
+          description: `Управляющая компания ${newCompanyId ? "назначена" : "удалена"} на объекте "${property.name}"`,
         });
         await this.eventRepository.save(event);
       }
@@ -308,7 +350,12 @@ export class AdminService {
 
   // ========== Просмотр логов действий ==========
 
-  async findAllEvents(userId?: string, propertyId?: string, changeType?: string, limit: number = 100) {
+  async findAllEvents(
+    userId?: string,
+    propertyId?: string,
+    changeType?: string,
+    limit: number = 100,
+  ) {
     const where: FindOptionsWhere<PropertyEvent> = {};
     if (userId) where.createdById = userId;
     if (propertyId) where.propertyId = propertyId;
@@ -316,8 +363,8 @@ export class AdminService {
 
     return this.eventRepository.find({
       where,
-      relations: ['property'],
-      order: { createdAt: 'DESC' },
+      relations: ["property"],
+      order: { createdAt: "DESC" },
       take: limit,
     });
   }
@@ -328,7 +375,7 @@ export class AdminService {
     return this.projectRepository.find({
       where: { deletedAt: null },
       relations: [],
-      order: { name: 'ASC' },
+      order: { name: "ASC" },
     });
   }
 
@@ -340,13 +387,20 @@ export class AdminService {
     return project;
   }
 
-  async updateProjectDefaultManager(projectId: string, managerId: string | null) {
+  async updateProjectDefaultManager(
+    projectId: string,
+    managerId: string | null,
+  ) {
     const project = await this.findProjectById(projectId);
 
     if (managerId) {
-      const manager = await this.userRepository.findOne({ where: { id: managerId } });
-      if (!manager || manager.role !== 'manager') {
-        throw new BadRequestException('Указанный пользователь не является менеджером');
+      const manager = await this.userRepository.findOne({
+        where: { id: managerId },
+      });
+      if (!manager || manager.role !== "manager") {
+        throw new BadRequestException(
+          "Указанный пользователь не является менеджером",
+        );
       }
     }
 
@@ -363,15 +417,15 @@ export class AdminService {
 
     return this.unitRepository.find({
       where,
-      relations: ['project'],
-      order: { unitNumber: 'ASC' },
+      relations: ["project"],
+      order: { unitNumber: "ASC" },
     });
   }
 
   async findUnitById(id: string) {
     const unit = await this.unitRepository.findOne({
       where: { id },
-      relations: ['project'],
+      relations: ["project"],
     });
     if (!unit) {
       throw new NotFoundException(`Юнит с ID ${id} не найден`);
@@ -383,9 +437,13 @@ export class AdminService {
     const unit = await this.findUnitById(unitId);
 
     if (managerId) {
-      const manager = await this.userRepository.findOne({ where: { id: managerId } });
-      if (!manager || manager.role !== 'manager') {
-        throw new BadRequestException('Указанный пользователь не является менеджером');
+      const manager = await this.userRepository.findOne({
+        where: { id: managerId },
+      });
+      if (!manager || manager.role !== "manager") {
+        throw new BadRequestException(
+          "Указанный пользователь не является менеджером",
+        );
       }
     }
 

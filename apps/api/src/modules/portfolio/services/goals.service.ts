@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PortfolioGoal } from '../../database/entities/portfolio-goal.entity';
-import { CreateGoalDto } from '../dto/create-goal.dto';
-import { UpdateGoalDto } from '../dto/update-goal.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { PortfolioGoal } from "../../database/entities/portfolio-goal.entity";
+import { CreateGoalDto } from "../dto/create-goal.dto";
+import { UpdateGoalDto } from "../dto/update-goal.dto";
 
 @Injectable()
 export class GoalsService {
@@ -13,26 +13,26 @@ export class GoalsService {
   ) {}
 
   async findByOwnerId(ownerId: string, propertyId?: string) {
-    const where: any = { ownerId, status: 'active' };
+    const where: any = { ownerId, status: "active" };
     if (propertyId) {
       where.propertyId = propertyId;
     }
     return this.goalRepository.find({
       where,
-      relations: ['property'],
-      order: { createdAt: 'DESC' },
+      relations: ["property"],
+      order: { createdAt: "DESC" },
     });
   }
 
   async findArchivedByOwnerId(ownerId: string, propertyId?: string) {
-    const where: any = { ownerId, status: 'archived' };
+    const where: any = { ownerId, status: "archived" };
     if (propertyId) {
       where.propertyId = propertyId;
     }
     return this.goalRepository.find({
       where,
-      relations: ['property'],
-      order: { createdAt: 'DESC' },
+      relations: ["property"],
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -40,7 +40,7 @@ export class GoalsService {
     const goal = this.goalRepository.create({
       ...createDto,
       ownerId,
-      status: 'active',
+      status: "active",
     });
     return this.goalRepository.save(goal);
   }
@@ -50,7 +50,7 @@ export class GoalsService {
       where: { id, ownerId },
     });
     if (!goal) {
-      throw new NotFoundException('Цель не найдена');
+      throw new NotFoundException("Цель не найдена");
     }
 
     Object.assign(goal, updateDto);
@@ -62,7 +62,7 @@ export class GoalsService {
       where: { id, ownerId },
     });
     if (!goal) {
-      throw new NotFoundException('Цель не найдена');
+      throw new NotFoundException("Цель не найдена");
     }
 
     return this.goalRepository.remove(goal);

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Injectable } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
 
 /**
  * JwtAuthGuard - Guard для защиты роутов JWT токеном
@@ -12,6 +12,4 @@ import { AuthGuard } from '@nestjs/passport';
  * После применения этого Guard, в request.user будет доступен объект User
  */
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
-
-
+export class JwtAuthGuard extends AuthGuard("jwt") {}

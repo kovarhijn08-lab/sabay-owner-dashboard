@@ -1,4 +1,4 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MinLength } from "class-validator";
 
 /**
  * DTO для входа пользователя
@@ -8,8 +8,6 @@ export class LoginDto {
   login!: string;
 
   @IsString()
-  @MinLength(6, { message: 'Пароль должен быть не менее 6 символов' })
+  @MinLength(6, { message: "Пароль должен быть не менее 6 символов" })
   password!: string;
 }
-
-

@@ -1,9 +1,9 @@
-import { IsEnum, IsOptional, IsNumber, IsObject } from 'class-validator';
+import { IsEnum, IsOptional, IsNumber, IsObject } from "class-validator";
 
 export class UpdateSLASettingsDto {
-  @IsEnum(['monthly_window', 'days_threshold'])
+  @IsEnum(["monthly_window", "days_threshold"])
   @IsOptional()
-  mode?: 'monthly_window' | 'days_threshold';
+  mode?: "monthly_window" | "days_threshold";
 
   @IsNumber()
   @IsOptional()

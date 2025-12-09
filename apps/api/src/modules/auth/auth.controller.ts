@@ -1,11 +1,20 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Put, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  Put,
+  UseGuards,
+} from "@nestjs/common";
 
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthService } from "./auth.service";
+import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { CurrentUser } from "./decorators/current-user.decorator";
 
 /**
  * AuthController - API endpoints для аутентификации
@@ -14,7 +23,7 @@ import { CurrentUser } from './decorators/current-user.decorator';
  * - POST /api/auth/register - регистрация нового пользователя (только для админов)
  * - POST /api/auth/login - вход пользователя (получение JWT токена)
  */
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -24,7 +33,7 @@ export class AuthController {
    *
    * Примечание: В будущем добавим проверку прав (только админы могут регистрировать)
    */
-  @Post('register')
+  @Post("register")
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -38,7 +47,7 @@ export class AuthController {
    * - accessToken: JWT токен для доступа к защищённым endpoints
    * - user: данные пользователя (без пароля)
    */
-  @Post('login')
+  @Post("login")
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -51,7 +60,7 @@ export class AuthController {
    * Требует аутентификации (JWT токен)
    * Возвращает данные пользователя (без пароля)
    */
-  @Get('profile')
+  @Get("profile")
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: { id: string }) {
     return this.authService.getProfile(user.id);
@@ -65,10 +74,12 @@ export class AuthController {
    * Все поля опциональны - можно обновлять только нужные
    * Возвращает обновлённые данные пользователя (без пароля)
    */
-  @Put('profile')
+  @Put("profile")
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@CurrentUser() user: { id: string }, @Body() updateProfileDto: UpdateProfileDto) {
+  async updateProfile(
+    @CurrentUser() user: { id: string },
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
     return this.authService.updateProfile(user.id, updateProfileDto);
   }
 }
-

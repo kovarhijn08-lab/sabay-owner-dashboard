@@ -1,7 +1,14 @@
-import { IsDecimal, IsString, IsDateString, IsOptional } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsDateString,
+  IsOptional,
+  Min,
+} from "class-validator";
 
 export class CreatePayoutDto {
-  @IsDecimal()
+  @IsNumber()
+  @Min(0.01)
   amount!: number;
 
   @IsDateString()

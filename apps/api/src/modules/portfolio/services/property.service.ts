@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { OwnerProperty } from '../../database/entities/owner-property.entity';
-import { Project } from '../../database/entities/project.entity';
-import { Unit } from '../../database/entities/unit.entity';
-import { PropertyEvent } from '../../database/entities/property-event.entity';
-import { CreatePropertyDto } from '../dto/create-property.dto';
-import { UpdatePropertyDto } from '../dto/update-property.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { OwnerProperty } from "../../database/entities/owner-property.entity";
+import { Project } from "../../database/entities/project.entity";
+import { Unit } from "../../database/entities/unit.entity";
+import { PropertyEvent } from "../../database/entities/property-event.entity";
+import { CreatePropertyDto } from "../dto/create-property.dto";
+import { UpdatePropertyDto } from "../dto/update-property.dto";
 
 @Injectable()
 export class PropertyService {
@@ -24,15 +24,15 @@ export class PropertyService {
   async findById(id: string, userId: string) {
     return this.propertyRepository.findOne({
       where: { id, ownerId: userId, deletedAt: null },
-      relations: ['owner', 'manager', 'unit', 'managementCompany'],
+      relations: ["owner", "manager", "unit", "managementCompany"],
     });
   }
 
   async findAll(userId: string) {
     return this.propertyRepository.find({
       where: { ownerId: userId, deletedAt: null },
-      relations: ['owner', 'manager', 'unit'],
-      order: { createdAt: 'DESC' },
+      relations: ["owner", "manager", "unit"],
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -41,7 +41,7 @@ export class PropertyService {
    * 1. Если в запросе указан managerId - используем его
    * 2. Иначе, если у связанного Project есть defaultManagerId - используем его
    * 3. Иначе managerId = null
-   * 
+   *
    * Также создает или находит Unit по unitNumber:
    * - Если указан projectId, ищет Unit с таким unitNumber в проекте
    * - Если не найден, создает новый Unit
@@ -74,14 +74,18 @@ export class PropertyService {
         let unit = null;
         try {
           unit = await this.unitRepository
-            .createQueryBuilder('unit')
-            .where('unit.projectId = :projectId', { projectId: createDto.projectId })
-            .andWhere('unit.unitNumber = :unitNumber', { unitNumber: createDto.unitNumber })
+            .createQueryBuilder("unit")
+            .where("unit.projectId = :projectId", {
+              projectId: createDto.projectId,
+            })
+            .andWhere("unit.unitNumber = :unitNumber", {
+              unitNumber: createDto.unitNumber,
+            })
             .andWhere('(unit.deletedAt IS NULL OR unit.deletedAt = "")')
-            .select(['unit.id', 'unit.projectId', 'unit.unitNumber'])
+            .select(["unit.id", "unit.projectId", "unit.unitNumber"])
             .getOne();
         } catch (error) {
-          console.error('[PropertyService] Ошибка поиска Unit:', error);
+          console.error("[PropertyService] Ошибка поиска Unit:", error);
           // Продолжаем создание нового Unit
         }
 
@@ -117,7 +121,7 @@ export class PropertyService {
       unitId,
       ownerId,
       managerId,
-      status: 'under_construction',
+      status: "under_construction",
       isActive: true,
     });
 
@@ -127,7 +131,7 @@ export class PropertyService {
   async update(id: string, userId: string, updateDto: UpdatePropertyDto) {
     const property = await this.findById(id, userId);
     if (!property) {
-      throw new NotFoundException('Объект не найден');
+      throw new NotFoundException("Объект не найден");
     }
 
     Object.assign(property, updateDto);
@@ -141,17 +145,21 @@ export class PropertyService {
   /**
    * Получить историю изменений объекта
    */
-  async getPropertyHistory(propertyId: string, userId: string, limit: number = 50) {
+  async getPropertyHistory(
+    propertyId: string,
+    userId: string,
+    limit: number = 50,
+  ) {
     // Проверяем, что объект принадлежит пользователю
     const property = await this.findById(propertyId, userId);
     if (!property) {
-      throw new NotFoundException('Объект не найден');
+      throw new NotFoundException("Объект не найден");
     }
 
     return this.eventRepository.find({
       where: { propertyId },
-      relations: ['createdBy'],
-      order: { createdAt: 'DESC' },
+      relations: ["createdBy"],
+      order: { createdAt: "DESC" },
       take: limit,
     });
   }
@@ -162,22 +170,32 @@ export class PropertyService {
   async getPropertyAnalytics(propertyId: string, userId: string) {
     const property = await this.findById(propertyId, userId);
     if (!property) {
-      throw new NotFoundException('Объект не найден');
+      throw new NotFoundException("Объект не найден");
     }
 
     const purchasePrice = property.purchasePrice || 0;
     const currentValue = property.currentEstimate || purchasePrice;
-    const purchaseDate = property.purchaseDate ? new Date(property.purchaseDate) : new Date(property.createdAt);
+    const purchaseDate = property.purchaseDate
+      ? new Date(property.purchaseDate)
+      : new Date(property.createdAt);
     const now = new Date();
 
     // ROI (уже рассчитывается на фронтенде, но добавим для полноты)
-    const roi = purchasePrice > 0 ? ((currentValue - purchasePrice) / purchasePrice) * 100 : 0;
+    const roi =
+      purchasePrice > 0
+        ? ((currentValue - purchasePrice) / purchasePrice) * 100
+        : 0;
 
     // Payback Period (период окупаемости)
     // Упрощенный расчет: если есть ожидаемый доход, рассчитываем через него
     let paybackPeriodYears: number | null = null;
-    if (property.expectedAdr && property.expectedOccupancy && property.status === 'rental') {
-      const annualIncome = property.expectedAdr * (property.expectedOccupancy / 100) * 365;
+    if (
+      property.expectedAdr &&
+      property.expectedOccupancy &&
+      property.status === "rental"
+    ) {
+      const annualIncome =
+        property.expectedAdr * (property.expectedOccupancy / 100) * 365;
       if (annualIncome > 0) {
         paybackPeriodYears = purchasePrice / annualIncome;
       }
@@ -187,9 +205,10 @@ export class PropertyService {
     // Для точного IRR нужны все денежные потоки, здесь упрощенная версия
     let irr: number | null = null;
     if (purchasePrice > 0 && currentValue > 0) {
-      const daysHeld = (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+      const daysHeld =
+        (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
       const yearsHeld = daysHeld / 365;
-      
+
       // Рассчитываем только если объект в собственности более 7 дней (чтобы избежать экстремальных значений)
       if (daysHeld >= 7 && yearsHeld < 100) {
         const ratio = currentValue / purchasePrice;
@@ -207,9 +226,10 @@ export class PropertyService {
     // CAGR (Compound Annual Growth Rate) - аналогично IRR
     let cagr: number | null = null;
     if (purchasePrice > 0 && currentValue > 0) {
-      const daysHeld = (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+      const daysHeld =
+        (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
       const yearsHeld = daysHeld / 365;
-      
+
       // Рассчитываем только если объект в собственности более 7 дней
       if (daysHeld >= 7 && yearsHeld < 100) {
         const ratio = currentValue / purchasePrice;
@@ -225,7 +245,8 @@ export class PropertyService {
     // Прогноз годового дохода
     let forecastAnnualIncome: number | null = null;
     if (property.expectedAdr && property.expectedOccupancy) {
-      forecastAnnualIncome = property.expectedAdr * (property.expectedOccupancy / 100) * 365;
+      forecastAnnualIncome =
+        property.expectedAdr * (property.expectedOccupancy / 100) * 365;
     }
 
     // Yield (доходность)
@@ -235,7 +256,10 @@ export class PropertyService {
     }
 
     // Форматирование значений с проверкой на разумность
-    const formatPercent = (value: number | null, maxValue: number = 1000): number | null => {
+    const formatPercent = (
+      value: number | null,
+      maxValue: number = 1000,
+    ): number | null => {
       if (value === null || isNaN(value) || !isFinite(value)) return null;
       if (Math.abs(value) > maxValue) return null; // Слишком большое значение
       return Math.round(value * 100) / 100;
@@ -243,14 +267,18 @@ export class PropertyService {
 
     return {
       roi: formatPercent(roi, 1000),
-      paybackPeriodYears: paybackPeriodYears && paybackPeriodYears > 0 && paybackPeriodYears < 100 
-        ? Math.round(paybackPeriodYears * 10) / 10 
-        : null,
+      paybackPeriodYears:
+        paybackPeriodYears && paybackPeriodYears > 0 && paybackPeriodYears < 100
+          ? Math.round(paybackPeriodYears * 10) / 10
+          : null,
       irr: formatPercent(irr, 1000),
       cagr: formatPercent(cagr, 1000),
-      forecastAnnualIncome: forecastAnnualIncome && forecastAnnualIncome > 0 && forecastAnnualIncome < 1e15
-        ? Math.round(forecastAnnualIncome) 
-        : null,
+      forecastAnnualIncome:
+        forecastAnnualIncome &&
+        forecastAnnualIncome > 0 &&
+        forecastAnnualIncome < 1e15
+          ? Math.round(forecastAnnualIncome)
+          : null,
       yieldPercent: formatPercent(yieldPercent, 100),
     };
   }

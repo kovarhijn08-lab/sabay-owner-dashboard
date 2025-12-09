@@ -1,7 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 
-import { User } from '../../database/entities/user.entity';
+import { User } from "../../database/entities/user.entity";
 
 /**
  * RolesGuard - Guard для проверки ролей пользователя
@@ -18,8 +23,11 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Получаем требуемые роли из декоратора @Roles()
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    
+    const requiredRoles = this.reflector.get<string[]>(
+      "roles",
+      context.getHandler(),
+    );
+
     // Если роли не указаны, разрешаем доступ
     if (!requiredRoles) {
       return true;
@@ -30,16 +38,14 @@ export class RolesGuard implements CanActivate {
     const user: User = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Пользователь не авторизован');
+      throw new ForbiddenException("Пользователь не авторизован");
     }
 
     // Проверяем, есть ли у пользователя нужная роль
     if (!requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('Недостаточно прав доступа');
+      throw new ForbiddenException("Недостаточно прав доступа");
     }
 
     return true;
   }
 }
-
-

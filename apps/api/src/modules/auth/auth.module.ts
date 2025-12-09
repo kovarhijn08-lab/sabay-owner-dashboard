@@ -1,13 +1,13 @@
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from "@nestjs/common";
+import { JwtModule } from "@nestjs/jwt";
+import { PassportModule } from "@nestjs/passport";
+import { ConfigService } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { User } from '../database/entities/user.entity';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
+import { User } from "../database/entities/user.entity";
+import { JwtStrategy } from "./strategies/jwt.strategy";
+import { AuthService } from "./auth.service";
+import { AuthController } from "./auth.controller";
 
 /**
  * AuthModule - модуль для аутентификации пользователей
@@ -26,14 +26,16 @@ import { AuthController } from './auth.controller';
 @Module({
   imports: [
     // Подключаем Passport для аутентификации
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({ defaultStrategy: "jwt" }),
     // Подключаем JWT модуль с настройками из переменных окружения
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key-change-in-production',
+        secret:
+          configService.get<string>("JWT_SECRET") ||
+          "your-secret-key-change-in-production",
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d', // Токен действует 7 дней
+          expiresIn: configService.get<string>("JWT_EXPIRES_IN") || "7d", // Токен действует 7 дней
         },
       }),
     }),
@@ -45,5 +47,3 @@ import { AuthController } from './auth.controller';
   exports: [AuthService, JwtModule, PassportModule], // Экспортируем для использования в других модулях
 })
 export class AuthModule {}
-
-

@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, DataSource } from 'typeorm';
-import { Project } from '../database/entities/project.entity';
-import { Unit } from '../database/entities/unit.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, IsNull, DataSource } from "typeorm";
+import { Project } from "../database/entities/project.entity";
+import { Unit } from "../database/entities/unit.entity";
 
 /**
  * CatalogService - сервис для работы с каталогом проектов и юнитов
- * 
+ *
  * Предоставляет доступ к каталогу проектов недвижимости для всех пользователей
  */
 @Injectable()
@@ -28,12 +28,14 @@ export class CatalogService {
       // Проверяем подключение к базе
       const dbOptions = this.dataSource.options as any;
       console.log(`[CatalogService] Database path: ${dbOptions.database}`);
-      
+
       // Проверяем количество проектов напрямую
-      const countQuery = 'SELECT COUNT(*) as count FROM projects';
+      const countQuery = "SELECT COUNT(*) as count FROM projects";
       const countResult = await this.dataSource.query(countQuery);
-      console.log(`[CatalogService] Total projects in database: ${countResult[0]?.count || 0}`);
-      
+      console.log(
+        `[CatalogService] Total projects in database: ${countResult[0]?.count || 0}`,
+      );
+
       // Используем raw SQL запрос, так как TypeORM не может правильно маппить данные
       let query = `
         SELECT 
@@ -48,25 +50,27 @@ export class CatalogService {
         FROM projects
         WHERE (deletedAt IS NULL OR deletedAt = '')
       `;
-      
+
       const params: any[] = [];
       if (region) {
-        query += ' AND region = ?';
+        query += " AND region = ?";
         params.push(region);
       }
-      
-      query += ' ORDER BY name ASC';
-      
+
+      query += " ORDER BY name ASC";
+
       const rawProjects = await this.dataSource.query(query, params);
-      console.log(`[CatalogService] Raw query returned ${rawProjects.length} projects`);
-      
+      console.log(
+        `[CatalogService] Raw query returned ${rawProjects.length} projects`,
+      );
+
       // Маппим raw данные в объекты Project
       return rawProjects.map((row: any) => ({
         id: row.id,
         name: row.name,
         region: row.region,
-        city: row.city || 'Пхукет',
-        country: row.country || 'Таиланд',
+        city: row.city || "Пхукет",
+        country: row.country || "Таиланд",
         developer: row.developer,
         propertyType: row.propertyType,
         housingClass: row.housingClass,
@@ -97,7 +101,7 @@ export class CatalogService {
         deletedAt: row.deletedAt,
       }));
     } catch (error) {
-      console.error('[CatalogService] Error getting projects:', error);
+      console.error("[CatalogService] Error getting projects:", error);
       throw error;
     }
   }
@@ -118,7 +122,7 @@ export class CatalogService {
   async getUnitsByProject(projectId: string) {
     return this.unitRepository.find({
       where: { projectId, deletedAt: null },
-      order: { unitNumber: 'ASC' },
+      order: { unitNumber: "ASC" },
     });
   }
 
@@ -128,7 +132,7 @@ export class CatalogService {
   async getUnitById(id: string) {
     const unit = await this.unitRepository.findOne({
       where: { id, deletedAt: null },
-      relations: ['project'],
+      relations: ["project"],
     });
     return unit;
   }
@@ -146,7 +150,7 @@ export class CatalogService {
         AND region != ''
       ORDER BY region ASC
     `;
-    
+
     const result = await this.dataSource.query(query);
     return result.map((row: any) => row.region).filter(Boolean);
   }

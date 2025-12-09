@@ -1,4 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsInt, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
 
 export class UpdatePropertyDto {
   @IsString()

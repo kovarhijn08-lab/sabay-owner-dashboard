@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from "class-validator";
 
 export class UpdateGoalDto {
   @IsNumber()
@@ -22,7 +22,7 @@ export class UpdateGoalDto {
   @IsOptional()
   description?: string | null;
 
-  @IsEnum(['active', 'archived'])
+  @IsEnum(["active", "archived"])
   @IsOptional()
-  status?: 'active' | 'archived';
+  status?: "active" | "archived";
 }

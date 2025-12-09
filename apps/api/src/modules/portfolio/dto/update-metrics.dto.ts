@@ -1,4 +1,11 @@
-import { IsNumber, IsString, IsOptional, IsDateString, Min, Max } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsOptional,
+  IsDateString,
+  Min,
+  Max,
+} from "class-validator";
 
 /**
  * DTO для обновления метрик доходности
@@ -37,4 +44,3 @@ export class UpdateMetricsDto {
   @IsDateString()
   payoutDate?: string;
 }
-

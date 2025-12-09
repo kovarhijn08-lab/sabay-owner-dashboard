@@ -1,7 +1,14 @@
-import { IsDecimal, IsDateString, IsString, IsOptional } from 'class-validator';
+import {
+  IsNumber,
+  IsDateString,
+  IsString,
+  IsOptional,
+  Min,
+} from "class-validator";
 
 export class UpdateValuationDto {
-  @IsDecimal()
+  @IsNumber()
+  @Min(0.01)
   @IsOptional()
   value?: number;
 

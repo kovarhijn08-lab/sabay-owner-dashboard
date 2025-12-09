@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsBoolean } from "class-validator";
 
 export class CreateUserDto {
   @IsString()
@@ -7,8 +7,8 @@ export class CreateUserDto {
   @IsString()
   password!: string;
 
-  @IsEnum(['admin', 'manager', 'owner', 'management_company'])
-  role!: 'admin' | 'manager' | 'owner' | 'management_company';
+  @IsEnum(["admin", "manager", "owner", "management_company"])
+  role!: "admin" | "manager" | "owner" | "management_company";
 
   @IsString()
   @IsOptional()

@@ -1,15 +1,21 @@
-import { IsString, IsNumber, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsDateString,
+  IsOptional,
+  Min,
+} from "class-validator";
 
 export class CreateExpenseDto {
-  @IsString()
-  name!: string;
-
   @IsNumber()
+  @Min(0.01)
   amount!: number;
 
+  @IsString()
+  expenseType!: string;
+
   @IsDateString()
-  @IsOptional()
-  date?: string;
+  expenseDate!: string;
 
   @IsString()
   @IsOptional()

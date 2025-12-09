@@ -1,39 +1,43 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from './user.entity';
-import { Plan } from './plan.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "./user.entity";
+import { Plan } from "./plan.entity";
 
-@Entity('subscriptions')
+@Entity("subscriptions")
 export class Subscription {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: false, onDelete: "CASCADE" })
   user!: User;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId!: string;
 
   @ManyToOne(() => Plan, { nullable: false })
   plan!: Plan;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   planId!: string;
 
-  @Column({ type: 'varchar', length: 50 })
-  status!: 'active' | 'cancelled' | 'expired' | 'trial';
+  @Column({ type: "varchar", length: 50 })
+  status!: "active" | "cancelled" | "expired" | "trial";
 
-  @Column({ type: 'date' })
+  @Column({ type: "date" })
   startDate!: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: "date", nullable: true })
   endDate!: Date | null;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: "date", nullable: true })
   trialEndDate!: Date | null;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
   createdAt!: Date;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: "datetime",
+    default: () => "CURRENT_TIMESTAMP",
+    onUpdate: "CURRENT_TIMESTAMP",
+  })
   updatedAt!: Date;
 }

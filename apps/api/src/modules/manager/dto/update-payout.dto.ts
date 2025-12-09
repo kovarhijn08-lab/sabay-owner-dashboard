@@ -1,7 +1,14 @@
-import { IsDecimal, IsString, IsDateString, IsOptional } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsDateString,
+  IsOptional,
+  Min,
+} from "class-validator";
 
 export class UpdatePayoutDto {
-  @IsDecimal()
+  @IsNumber()
+  @Min(0.01)
   @IsOptional()
   amount?: number;
 
@@ -16,4 +23,8 @@ export class UpdatePayoutDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: "planned" | "paid" | "delayed";
 }

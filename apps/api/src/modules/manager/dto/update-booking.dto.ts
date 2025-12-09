@@ -1,4 +1,10 @@
-import { IsDateString, IsDecimal, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from "class-validator";
 
 export class UpdateBookingDto {
   @IsDateString()
@@ -9,7 +15,8 @@ export class UpdateBookingDto {
   @IsOptional()
   checkOut?: string;
 
-  @IsDecimal()
+  @IsNumber()
+  @Min(0.01)
   @IsOptional()
   totalAmount?: number;
 
@@ -20,4 +27,8 @@ export class UpdateBookingDto {
   @IsString()
   @IsOptional()
   guestName?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }

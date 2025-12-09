@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsBoolean } from "class-validator";
 
 export class UpdateUserDto {
   @IsString()
@@ -9,9 +9,9 @@ export class UpdateUserDto {
   @IsOptional()
   password?: string;
 
-  @IsEnum(['admin', 'manager', 'owner', 'management_company'])
+  @IsEnum(["admin", "manager", "owner", "management_company"])
   @IsOptional()
-  role?: 'admin' | 'manager' | 'owner' | 'management_company';
+  role?: "admin" | "manager" | "owner" | "management_company";
 
   @IsString()
   @IsOptional()
