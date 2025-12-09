@@ -1,0 +1,45 @@
+# Автоматическая обработка файлов Git
+
+# Текстовые файлы
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Код
+*.ts text eol=lf diff=typescript
+*.tsx text eol=lf diff=typescript
+*.js text eol=lf diff=javascript
+*.jsx text eol=lf diff=javascript
+*.css text eol=lf diff=css
+*.scss text eol=lf diff=css
+*.html text eol=lf diff=html
+
+# Конфигурация
+*.config.* text eol=lf
+*.env.example text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Скрипты
+*.sh text eol=lf
+
+# Бинарные файлы
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.pdf binary
+*.zip binary
+*.sqlite binary
+*.db binary
+
+# Автоматическое определение языка для лингвистики GitHub
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+*.js linguist-language=JavaScript
+*.jsx linguist-language=JavaScript
+
