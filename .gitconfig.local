@@ -1,0 +1,60 @@
+# Локальная конфигурация Git для проекта
+# Использование: git config --local include.path ../.gitconfig.local
+
+[core]
+    autocrlf = input
+    editor = nano
+    excludesfile = .git/info/exclude
+
+[init]
+    defaultBranch = main
+
+[push]
+    default = simple
+    autoSetupRemote = true
+
+[pull]
+    rebase = false
+
+[merge]
+    tool = vimdiff
+
+[diff]
+    tool = vimdiff
+    colorMoved = default
+    colorMovedWS = allow-indentation-change
+
+[status]
+    submoduleSummary = true
+    showUntrackedFiles = all
+
+[log]
+    decorate = short
+    date = iso
+    abbrevCommit = true
+
+[color]
+    ui = auto
+
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = yellow
+    changed = green
+    untracked = cyan
+
+[rerere]
+    enabled = true
+
+[help]
+    autocorrect = 1
+

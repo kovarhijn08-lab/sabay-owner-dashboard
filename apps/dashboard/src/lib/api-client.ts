@@ -332,6 +332,7 @@ export interface UpdatePropertyDto {
   region?: string;
   purchasePrice?: number;
   purchaseDate?: string;
+  status?: 'under_construction' | 'rental' | 'closed';
   currentEstimate?: number;
   constructionProgress?: number;
   constructionStage?: string;

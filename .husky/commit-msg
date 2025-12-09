@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Commit-msg hook - проверка формата сообщения коммита
+
+commit_msg=$(cat "$1")
+
+# Проверка на пустое сообщение
+if [ -z "$commit_msg" ]; then
+  echo "❌ Ошибка: Сообщение коммита не может быть пустым!"
+  exit 1
+fi
+
+# Проверка длины первой строки (рекомендуется до 50 символов)
+first_line=$(echo "$commit_msg" | head -n 1)
+if [ ${#first_line} -gt 72 ]; then
+  echo "⚠️  Предупреждение: Первая строка коммита слишком длинная (>72 символов)"
+  echo "   Рекомендуется: до 50 символов"
+fi
+
+# Проверка формата (опционально - можно закомментировать)
+# if ! echo "$commit_msg" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|update):'; then
+#   echo "⚠️  Предупреждение: Сообщение не следует формату Conventional Commits"
+#   echo "   Рекомендуемый формат: type: описание"
+#   echo "   Типы: feat, fix, docs, style, refactor, perf, test, chore"
+# fi
+
+echo "✅ Сообщение коммита проверено!"
+

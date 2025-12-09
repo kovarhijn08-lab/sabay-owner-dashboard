@@ -514,9 +514,14 @@ export default function PortfolioPage() {
                     </div>
                   ) : (
                     <>
-                      {Object.entries(chartData.statusDistribution).map(([status, count]: [string, any]) => {
-                        const total = Object.values(chartData.statusDistribution).reduce((a: number, b: any) => a + b, 0);
-                        const percentage = total > 0 ? (count / total) * 100 : 0;
+                      {Object.entries(chartData.statusDistribution || {}).map(([status, count]: [string, unknown]) => {
+                        const countNum: number = typeof count === 'number' ? count : 0;
+                        const statusDist = chartData.statusDistribution || {};
+                        const total: number = Object.values(statusDist).reduce((a: number, b: unknown) => {
+                          const bNum: number = typeof b === 'number' ? b : 0;
+                          return a + bNum;
+                        }, 0);
+                        const percentage: number = total > 0 && countNum >= 0 ? (countNum / total) * 100 : 0;
                         const statusLabels: Record<string, string> = {
                           rental: 'В аренде',
                           under_construction: 'В строительстве',
