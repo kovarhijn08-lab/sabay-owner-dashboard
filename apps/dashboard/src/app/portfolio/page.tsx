@@ -516,11 +516,8 @@ export default function PortfolioPage() {
                     <>
                       {Object.entries(chartData.statusDistribution || {}).map(([status, count]: [string, unknown]) => {
                         const countNum: number = typeof count === 'number' ? count : 0;
-                        const statusDist = chartData.statusDistribution || {};
-                        const total: number = Object.values(statusDist).reduce((a: number, b: unknown) => {
-                          const bNum: number = typeof b === 'number' ? b : 0;
-                          return a + bNum;
-                        }, 0);
+                        const statusDist = (chartData.statusDistribution || {}) as Record<string, number>;
+                        const total: number = Object.values(statusDist).reduce((a: number, b: number) => a + b, 0);
                         const percentage: number = total > 0 && countNum >= 0 ? (countNum / total) * 100 : 0;
                         const statusLabels: Record<string, string> = {
                           rental: 'В аренде',
@@ -536,7 +533,7 @@ export default function PortfolioPage() {
                           <div key={status}>
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-white/80">{statusLabels[status] || status}</span>
-                              <span className="text-white/60">{count} ({percentage.toFixed(1)}%)</span>
+                              <span className="text-white/60">{countNum} ({percentage.toFixed(1)}%)</span>
                             </div>
                             <div className="w-full bg-white/10 rounded-full h-2">
                               <div

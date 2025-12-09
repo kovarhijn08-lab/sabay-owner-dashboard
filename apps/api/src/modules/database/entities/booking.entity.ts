@@ -13,27 +13,33 @@ export class Booking {
   @Column({ type: 'uuid' })
   propertyId!: string;
 
-  @Column({ type: 'date' })
-  checkIn!: Date;
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+  createdBy!: User;
+
+  @Column({ type: 'uuid' })
+  createdById!: string;
 
   @Column({ type: 'date' })
-  checkOut!: Date;
+  checkinDate!: Date;
 
-  @Column({ type: 'decimal', precision: 15, scale: 2 })
-  totalAmount!: number;
+  @Column({ type: 'date' })
+  checkoutDate!: Date;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  source!: string | null;
+  @Column({ type: 'varchar', length: 50 })
+  source!: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  amount!: number;
+
+  @Column({ type: 'text', nullable: true })
+  comment!: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   guestName!: string | null;
 
-  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
-  createdBy!: User | null;
-
-  @Column({ type: 'uuid', nullable: true })
-  createdById!: string | null;
-
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt!: Date | null;
 }
